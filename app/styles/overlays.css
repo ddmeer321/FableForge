@@ -1,0 +1,520 @@
+.opening-backdrop {
+  --rarity-color: #8b8e9b;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--rarity-color) 36%, transparent), transparent 32rem),
+    rgba(15,14,35,.9);
+}
+
+.rarity-scene-uncommon { --rarity-color: #58ad75; }
+.rarity-scene-rare { --rarity-color: #5899df; }
+.rarity-scene-epic { --rarity-color: #9c6bd9; }
+.rarity-scene-legendary { --rarity-color: #efbd54; }
+.rarity-scene-mythic { --rarity-color: #ed6586; }
+.rarity-scene-secret { --rarity-color: #e36fcb; }
+
+.box-opening-modal {
+  width: min(620px, 100%);
+  min-height: 580px;
+  display: grid;
+  place-items: center;
+  position: relative;
+  padding: 25px;
+  text-align: center;
+  color: #f8f1e3;
+}
+
+.opening-runes {
+  position: absolute;
+  width: 430px;
+  height: 430px;
+  border: 1px dashed color-mix(in srgb, var(--rarity-color) 50%, transparent);
+  border-radius: 50%;
+  animation: opening-rotate 9s linear infinite;
+}
+
+.opening-runes::before,
+.opening-runes::after {
+  content: "";
+  position: absolute;
+  border: 1px solid color-mix(in srgb, var(--rarity-color) 25%, transparent);
+  border-radius: 50%;
+}
+
+.opening-runes::before { inset: 45px; }
+.opening-runes::after { inset: 96px; }
+
+.opening-runes i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  margin: -4px;
+  border-radius: 50%;
+  background: var(--rarity-color);
+  box-shadow: 0 0 15px var(--rarity-color);
+}
+
+.opening-runes i:nth-child(1) { transform: translateY(-215px); }
+.opening-runes i:nth-child(2) { transform: rotate(60deg) translateY(-215px); }
+.opening-runes i:nth-child(3) { transform: rotate(120deg) translateY(-215px); }
+.opening-runes i:nth-child(4) { transform: rotate(180deg) translateY(-215px); }
+.opening-runes i:nth-child(5) { transform: rotate(240deg) translateY(-215px); }
+.opening-runes i:nth-child(6) { transform: rotate(300deg) translateY(-215px); }
+
+@keyframes opening-rotate { to { transform: rotate(360deg); } }
+
+.animated-chest {
+  --box-accent: #7f6bc7;
+  width: 260px;
+  height: 220px;
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 30px 30px rgba(0,0,0,.4));
+  animation: opening-chest 1.25s ease-in-out forwards;
+}
+
+.animated-chest > span {
+  position: absolute;
+  display: block;
+}
+
+.opening-lid,
+.opening-body {
+  left: 10px;
+  right: 10px;
+  border: 8px solid color-mix(in srgb, var(--box-accent) 55%, #5d4568);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--box-accent) 45%, #e9ae54), #ffd67b, color-mix(in srgb, var(--box-accent) 52%, #c9863e));
+}
+
+.opening-lid {
+  top: 5px;
+  height: 95px;
+  border-radius: 130px 130px 12px 12px;
+  transform-origin: center bottom;
+  animation: lid-open 1.25s cubic-bezier(.7,-.1,.4,1.4) forwards;
+}
+
+.opening-body {
+  top: 92px;
+  height: 115px;
+  border-radius: 11px 11px 28px 28px;
+}
+
+.opening-lock {
+  z-index: 2;
+  left: 102px;
+  top: 85px;
+  width: 56px;
+  height: 67px;
+  border: 6px solid #704524;
+  border-radius: 8px 8px 17px 17px;
+  background: #ffe58c;
+  box-shadow: 0 0 28px #ffe984;
+}
+
+.chest-glow {
+  left: 50%;
+  top: 90px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #fff4ae;
+  box-shadow: 0 0 70px 45px color-mix(in srgb, var(--rarity-color) 58%, transparent);
+  transform: translateX(-50%);
+  animation: glow-burst 1.25s ease-in forwards;
+}
+
+@keyframes opening-chest {
+  0% { transform: translateY(30px) scale(.75); }
+  40% { transform: translateY(-12px) scale(1.04); }
+  70% { transform: translateY(0) scale(1); }
+  84% { transform: translateX(-4px) rotate(-1deg); }
+  91% { transform: translateX(4px) rotate(1deg); }
+  100% { transform: none; }
+}
+
+@keyframes lid-open {
+  0%, 68% { transform: rotateX(0); }
+  100% { transform: translateY(-38px) rotate(-12deg); }
+}
+
+@keyframes glow-burst {
+  0%, 70% { opacity: 0; transform: translateX(-50%) scale(.2); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1.2); }
+}
+
+.box-opening-modal > p {
+  position: absolute;
+  bottom: 80px;
+  color: #c0b9ca;
+  font-family: Georgia, serif;
+}
+
+.skip-button {
+  position: absolute;
+  bottom: 35px;
+  padding: 8px 13px;
+  color: #9f99aa;
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 99px;
+  background: rgba(255,255,255,.05);
+  cursor: pointer;
+  font-size: 7px;
+  letter-spacing: .12em;
+}
+
+.loot-reveal {
+  width: min(480px, 100%);
+  min-height: 540px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 25px;
+  border: 1px solid color-mix(in srgb, var(--rarity-color) 55%, transparent);
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--rarity-color) 23%, transparent), transparent 43%),
+    rgba(28,27,50,.9);
+  box-shadow: 0 30px 80px rgba(2,3,12,.5);
+  animation: reveal-enter .45s cubic-bezier(.2,1.4,.5,1);
+}
+
+@keyframes reveal-enter {
+  from { transform: scale(.65) translateY(35px); opacity: 0; }
+}
+
+.loot-reveal.rare-impact {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--rarity-color) 50%, transparent), 0 0 80px color-mix(in srgb, var(--rarity-color) 24%, transparent);
+}
+
+.reveal-rays {
+  position: absolute;
+  width: 390px;
+  height: 390px;
+  z-index: -1;
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--rarity-color) 18%, transparent) 0 5deg, transparent 5deg 20deg);
+  border-radius: 50%;
+  animation: opening-rotate 18s linear infinite;
+}
+
+.loot-reveal > .adventure-portrait,
+.loot-reveal > .large-gear-icon,
+.loot-reveal > .large-cosmetic-icon {
+  margin: 20px 0 12px;
+}
+
+.loot-reveal .adventure-portrait {
+  width: 150px;
+  height: 166px;
+  box-shadow: 0 0 35px color-mix(in srgb, var(--rarity-color) 35%, transparent);
+}
+
+.large-cosmetic-icon {
+  width: 130px;
+  height: 130px;
+  display: grid;
+  place-items: center;
+  color: var(--rarity-color);
+  border: 2px solid var(--rarity-color);
+  border-radius: 50%;
+  background: rgba(255,255,255,.06);
+  box-shadow: 0 0 35px color-mix(in srgb, var(--rarity-color) 30%, transparent);
+  font-size: 60px;
+}
+
+.loot-kind {
+  color: var(--rarity-color);
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: .18em;
+}
+
+.loot-reveal h2 {
+  margin: 5px 0 3px;
+  font-family: Georgia, serif;
+  font-size: 35px;
+}
+
+.loot-reveal > p {
+  margin: 0;
+  color: #aaa4b4;
+  font-family: Georgia, serif;
+  font-size: 11px;
+}
+
+.duplicate-note,
+.inventory-note {
+  margin-top: 14px;
+  padding: 7px 11px;
+  color: #b9b1c2;
+  border-radius: 99px;
+  background: rgba(255,255,255,.06);
+  font-size: 7px;
+}
+
+.inventory-note {
+  color: #a6d8b6;
+  background: rgba(90,174,117,.1);
+}
+
+.modal-primary {
+  min-width: 170px;
+  margin-top: 18px;
+  padding: 12px 20px;
+  color: #fff;
+  border: 1px solid color-mix(in srgb, var(--rarity-color) 80%, #fff);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--rarity-color) 72%, #393055);
+  cursor: pointer;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.tutorial-backdrop {
+  background:
+    radial-gradient(circle at 50% 40%, rgba(128,113,192,.24), transparent 32rem),
+    rgba(20,20,44,.83);
+}
+
+.tutorial-modal {
+  width: min(860px, 100%);
+  min-height: 500px;
+  display: grid;
+  grid-template-columns: 1.1fr .9fr;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.27);
+  border-radius: 30px;
+  background: #fffaf1;
+  box-shadow: 0 35px 90px rgba(4,5,16,.5);
+}
+
+.tutorial-art {
+  display: grid;
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(#a8cce4, #d7d79e);
+}
+
+.tutorial-art > span {
+  position: absolute;
+  display: block;
+}
+
+.tutorial-sun {
+  right: 15%;
+  top: 12%;
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  background: #fff1a1;
+  box-shadow: 0 0 35px #fff1a8;
+}
+
+.tutorial-hill {
+  left: -15%;
+  right: -15%;
+  bottom: -18%;
+  height: 58%;
+  border-radius: 50%;
+  background: #75ab76;
+}
+
+.tutorial-party {
+  display: flex;
+  align-items: end;
+  z-index: 2;
+  margin-top: 80px;
+}
+
+.tutorial-party > div {
+  display: grid;
+  justify-items: center;
+  margin-left: -10px;
+  animation: party-bob 3s ease-in-out infinite;
+  animation-delay: calc(var(--party-order) * -.6s);
+}
+
+.tutorial-party > div > span {
+  margin-top: -3px;
+  padding: 3px 8px;
+  color: #fff;
+  border-radius: 99px;
+  background: rgba(46,57,58,.7);
+  font-size: 7px;
+}
+
+.tutorial-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px;
+}
+
+.tutorial-step-icon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  margin-top: 17px;
+  color: #6652af;
+  border-radius: 17px;
+  background: #eee9fa;
+  font-size: 27px;
+}
+
+.tutorial-copy h2 {
+  margin: 13px 0 9px;
+  color: #36364d;
+  font-family: Georgia, serif;
+  font-size: 31px;
+  line-height: 1.05;
+}
+
+.tutorial-copy p {
+  margin: 0;
+  color: #747587;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.tutorial-dots {
+  display: flex;
+  gap: 6px;
+  margin-top: 25px;
+}
+
+.tutorial-dots i {
+  width: 24px;
+  height: 5px;
+  border-radius: 99px;
+  background: #dedbe2;
+}
+
+.tutorial-dots i.done {
+  background: #73b486;
+}
+
+.tutorial-dots i.active {
+  background: #6e58b6;
+}
+
+.tutorial-copy > button {
+  width: 100%;
+  margin-top: 17px;
+  padding: 13px;
+  color: #fff;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(#7862c5, #59469f);
+  box-shadow: 0 9px 20px rgba(87,69,158,.22);
+  cursor: pointer;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.confirm-modal {
+  width: min(460px, 100%);
+  display: grid;
+  justify-items: center;
+  padding: 34px;
+  text-align: center;
+  color: #eae4db;
+  border: 1px solid #736384;
+  border-radius: 23px;
+  background: #26253b;
+  box-shadow: 0 30px 75px rgba(3,5,15,.5);
+}
+
+.confirm-modal > .game-icon {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 13px;
+  color: #dfa6a9;
+  border-radius: 50%;
+  background: rgba(199,79,90,.12);
+  font-size: 25px;
+}
+
+.confirm-modal h2 {
+  margin: 7px 0;
+  font-family: Georgia, serif;
+  font-size: 28px;
+}
+
+.confirm-modal > p {
+  color: #a4a0af;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.confirm-modal > div {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.confirm-modal button {
+  padding: 11px;
+  color: #d8d3df;
+  border: 1px solid #4f4d65;
+  border-radius: 10px;
+  background: #313147;
+  cursor: pointer;
+  font-size: 7px;
+  font-weight: 800;
+}
+
+.confirm-modal button.danger {
+  color: #fff;
+  border-color: #ae5361;
+  background: #8f3f51;
+}
+
+@media (max-width: 700px) {
+  .box-opening-modal {
+    min-height: 520px;
+  }
+
+  .opening-runes {
+    scale: .74;
+  }
+
+  .animated-chest {
+    scale: .75;
+  }
+
+  .loot-reveal {
+    min-height: 510px;
+  }
+
+  .tutorial-modal {
+    grid-template-columns: 1fr;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .tutorial-art {
+    min-height: 220px;
+  }
+
+  .tutorial-party {
+    margin-top: 45px;
+  }
+
+  .tutorial-party .portrait-medium {
+    width: 65px;
+    height: 71px;
+  }
+
+  .tutorial-copy {
+    padding: 26px 22px;
+  }
+}
