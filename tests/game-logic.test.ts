@@ -94,6 +94,69 @@ test("choosing a branch starts a visible journey before its encounter", () => {
   assert.equal(next.event, null);
 });
 
+test("the frostglass cavern builds a distinct ten-stage route", () => {
+  const run = createRun("frostglass-cavern");
+
+  assert.equal(run.dungeonId, "frostglass-cavern");
+  assert.equal(run.routePlan.length, 10);
+  assert.ok(run.routePlan.every((fork) => fork.length === 2));
+  assert.ok(run.routePlan.flat().some((room) => /Eis|Frost|Kristall|Splitter|Raureif/i.test(`${room.title} ${room.subtitle}`)));
+});
+
+test("frostglass combat uses frost enemies and protects the sheltered hero from frost waves", () => {
+  const progress = starterProgress();
+  const combat = createCombat(
+    progress,
+    progress.team,
+    "fight",
+    [],
+    0,
+    {},
+    0,
+    "frostglass-cavern",
+  );
+  const sheltered = combat.heroes.find((hero) => hero.heroId === "brann");
+  const exposed = combat.heroes.find((hero) => hero.heroId === "astra");
+  assert.ok(sheltered);
+  assert.ok(exposed);
+  assert.ok(combat.enemies.every((enemy) => ["ice-wisp", "frost-wolf"].includes(enemy.kind)));
+
+  combat.shelterHeroId = sheltered.heroId;
+  combat.environmentNextAt = 0;
+  combat.enemies.forEach((enemy) => {
+    enemy.nextAction = Date.now() + 10_000;
+  });
+  combat.heroes.forEach((hero) => {
+    hero.nextAction = Date.now() + 10_000;
+  });
+  const shelteredAction = sheltered.nextAction;
+  const exposedAction = exposed.nextAction;
+
+  const next = tickCombat(combat, []);
+
+  assert.equal(next.environmentPulse, 1);
+  assert.equal(next.heroes.find((hero) => hero.heroId === sheltered.heroId)?.nextAction, shelteredAction);
+  assert.ok((next.heroes.find((hero) => hero.heroId === exposed.heroId)?.nextAction ?? 0) > exposedAction);
+});
+
+test("Königin Skadi is the stronger second-dungeon boss", () => {
+  const progress = starterProgress();
+  const combat = createCombat(
+    progress,
+    progress.team,
+    "boss",
+    [],
+    0,
+    {},
+    0,
+    "frostglass-cavern",
+  );
+
+  assert.equal(combat.enemies[0].name, "Königin Skadi");
+  assert.ok(combat.enemies[0].maxHp >= 2700);
+  assert.equal(combat.enemies[0].boss, true);
+});
+
 test("combat effects identify their attacker for visible attack animations", () => {
   const progress = starterProgress();
   const combat = createCombat(progress, progress.team, "fight", []);

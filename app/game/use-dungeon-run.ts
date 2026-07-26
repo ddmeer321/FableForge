@@ -57,8 +57,10 @@ function advanceAfterRoom(run: DungeonRun): DungeonRun {
     return {
       ...next,
       phase: "powerup",
-      buffChoices: selectRunBuffs(run.buffs),
-      message: "Der Wald bietet dir drei Kräfte an. Wähle eine.",
+      buffChoices: selectRunBuffs(run.buffs, run.dungeonId),
+      message: run.dungeonId === "frostglass-cavern"
+        ? "Die Kristalle spiegeln drei Kräfte. Wähle eine."
+        : "Der Wald bietet dir drei Kräfte an. Wähle eine.",
     };
   }
   if (nextStage >= 10) {
@@ -66,14 +68,18 @@ function advanceAfterRoom(run: DungeonRun): DungeonRun {
       ...next,
       phase: "bossIntro",
       choices: [],
-      message: "Hinter den Ästen schlägt das Herz des Waldes.",
+      message: run.dungeonId === "frostglass-cavern"
+        ? "Hinter dem letzten Eistor wartet der Frostthron."
+        : "Hinter den Ästen schlägt das Herz des Waldes.",
     };
   }
   return {
     ...next,
     phase: "path",
     choices: next.routePlan[nextStage] ?? [],
-    message: "Der Pfad teilt sich erneut.",
+    message: run.dungeonId === "frostglass-cavern"
+      ? "Im blauen Nebel teilt sich der Eisweg erneut."
+      : "Der Pfad teilt sich erneut.",
   };
 }
 
@@ -90,8 +96,8 @@ export function useDungeonRun(progress: PlayerProgress) {
     return () => window.clearInterval(timer);
   }, []);
 
-  const startRun = useCallback(() => {
-    const next = createRun();
+  const startRun = useCallback((dungeonId: string) => {
+    const next = createRun(dungeonId);
     next.partyHp = Object.fromEntries(progress.team.map((slot) => [slot.heroId, 1]));
     setRun(next);
   }, [progress.team]);
@@ -127,6 +133,7 @@ export function useDungeonRun(progress: PlayerProgress) {
               current.bonusHealItems,
               current.partyHp,
               current.nextCombatEnergy,
+              current.dungeonId,
             ),
             nextCombatEnergy: 0,
           };
@@ -134,7 +141,7 @@ export function useDungeonRun(progress: PlayerProgress) {
         return {
           ...base,
           phase: "event",
-          event: createEventForRoom(choice.type),
+          event: createEventForRoom(choice.type, current.dungeonId),
         };
       });
     },
@@ -148,6 +155,87 @@ export function useDungeonRun(progress: PlayerProgress) {
         const next = { ...current };
 
         switch (choiceId) {
+          case "shatter":
+            next.earnedGold += 220;
+            next.partyHp = damageParty(next.partyHp, 0.12);
+            next.message = "Das Eis bricht gefährlich, doch 220 Gold gehören dir.";
+            break;
+          case "thaw":
+            if (next.earnedGold < 90) return current;
+            next.earnedGold -= 90;
+            next.bonusHealItems += 1;
+            next.message = "Die aufgetaute Truhe enthält eine wärmende Heilration.";
+            break;
+          case "leave-ice":
+            next.earnedKeys += 1;
+            next.message = "Ylvas Bergungstrupp belohnt die genaue Markierung.";
+            break;
+          case "share-flame":
+            next.partyHp = healParty(next.partyHp, 0.25);
+            next.bonusHealItems += 1;
+            next.message = "Ylva teilt Wärme und eine dampfende Heilration.";
+            break;
+          case "steal-flame": {
+            next.earnedGold += 260;
+            const ambush = {
+              id: `frost-ambush-${Date.now()}`,
+              type: "elite" as const,
+              title: "Ylvas Frostwölfe",
+              subtitle: "Das Rudel verteidigt die letzte Flamme",
+              danger: "Gefährlich" as const,
+              reward: "Beute verteidigen",
+              icon: "claw",
+            };
+            return {
+              ...next,
+              currentRoom: ambush,
+              phase: "combat",
+              event: null,
+              combat: createCombat(
+                progress,
+                progress.team,
+                "elite",
+                next.buffs,
+                next.bonusHealItems,
+                next.partyHp,
+                next.nextCombatEnergy,
+                next.dungeonId,
+              ),
+              nextCombatEnergy: 0,
+              message: "Die Frostwölfe schneiden euch den Rückweg ab!",
+            };
+          }
+          case "pass-camp":
+          case "walk-away":
+            next.message = "Die Gruppe bewahrt ihre Wärme für den nächsten Schritt.";
+            break;
+          case "thermal-rest":
+            next.partyHp = healParty(next.partyHp, 0.4);
+            next.message = "Die Thermalquelle taut müde Glieder wieder auf.";
+            break;
+          case "thermal-bottle":
+            next.bonusHealItems += 1;
+            next.message = "Eine Flasche Thermalwasser kommt ins Gepäck.";
+            break;
+          case "focus-crystal":
+            next.nextCombatEnergy = 25;
+            next.message = "Das Kristalllicht lädt die Fähigkeiten des Teams.";
+            break;
+          case "touch-mirror":
+            next.partyHp = damageParty(next.partyHp, 0.2);
+            if (!next.buffs.some((buff) => buff.id === "warm-core")) {
+              next.buffs = [...next.buffs, RUN_BUFFS.find((buff) => buff.id === "warm-core")!];
+            }
+            next.message = "Der Spiegel nimmt Wärme und hinterlässt einen warmen Kern.";
+            break;
+          case "melt-mirror":
+            if (next.earnedGold < 140) return current;
+            next.earnedGold -= 140;
+            if (!next.buffs.some((buff) => buff.id === "crystal-guard")) {
+              next.buffs = [...next.buffs, RUN_BUFFS.find((buff) => buff.id === "crystal-guard")!];
+            }
+            next.message = "Das schmelzende Spiegelglas wird zur Kristallwacht.";
+            break;
           case "open":
             next.earnedGold += 180;
             next.partyHp = damageParty(next.partyHp, 0.1);
@@ -192,6 +280,7 @@ export function useDungeonRun(progress: PlayerProgress) {
                 next.bonusHealItems,
                 next.partyHp,
                 next.nextCombatEnergy,
+                next.dungeonId,
               ),
               nextCombatEnergy: 0,
               message: "Pips Dornwölfe greifen an!",
@@ -245,7 +334,7 @@ export function useDungeonRun(progress: PlayerProgress) {
         buffChoices: [],
         message: `${buff.name} begleitet dich für den Rest des Runs.`,
       };
-      if (next.stage >= 5) {
+      if (next.stage >= 10) {
         return { ...next, phase: "bossIntro", choices: [] };
       }
       return {
@@ -259,11 +348,12 @@ export function useDungeonRun(progress: PlayerProgress) {
   const startBoss = useCallback(() => {
     setRun((current) => {
       if (!current || current.phase !== "bossIntro") return current;
+      const frost = current.dungeonId === "frostglass-cavern";
       const bossRoom: RoomChoice = {
-        id: "heart-tree-boss",
+        id: frost ? "frost-throne-boss" : "heart-tree-boss",
         type: "boss",
-        title: "Herzbaum",
-        subtitle: "Waldhüter Nox",
+        title: frost ? "Frostthron" : "Herzbaum",
+        subtitle: frost ? "Königin Skadi" : "Waldhüter Nox",
         danger: "Gefährlich",
         reward: "Bossbox & Dungeon-Beute",
         icon: "boss",
@@ -281,6 +371,7 @@ export function useDungeonRun(progress: PlayerProgress) {
           current.bonusHealItems,
           current.partyHp,
           current.nextCombatEnergy,
+          current.dungeonId,
         ),
         nextCombatEnergy: 0,
       };
@@ -296,16 +387,19 @@ export function useDungeonRun(progress: PlayerProgress) {
       const partyHp = capturePartyHp(current.combat);
       const isBoss = current.currentRoom?.type === "boss";
       if (isBoss) {
+        const frost = current.dungeonId === "frostglass-cavern";
         return {
           ...current,
           phase: "reward",
           combat: null,
           partyHp,
-          earnedGold: current.earnedGold + 620,
-          earnedKeys: current.earnedKeys + 2,
-          earnedXp: current.earnedXp + 240,
+          earnedGold: current.earnedGold + (frost ? 850 : 620),
+          earnedKeys: current.earnedKeys + (frost ? 3 : 2),
+          earnedXp: current.earnedXp + (frost ? 360 : 240),
           roomsCleared: current.roomsCleared + 1,
-          message: "Nox ist besiegt. Der Wald atmet wieder.",
+          message: frost
+            ? "Skadi ist besiegt. Die Frostglas-Höhlen beginnen zu tauen."
+            : "Nox ist besiegt. Der Wald atmet wieder.",
         };
       }
       const roomBonus =

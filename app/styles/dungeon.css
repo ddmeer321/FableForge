@@ -843,6 +843,18 @@
   box-shadow: 0 0 40px rgba(111,229,210,.38);
 }
 
+.event-art-mirror .event-object {
+  width: 155px;
+  height: 245px;
+  border: 9px solid #a9d9ee;
+  border-radius: 48% 48% 24% 24%;
+  background:
+    linear-gradient(135deg, transparent 0 42%, rgba(255,255,255,.7) 43% 46%, transparent 47%),
+    linear-gradient(160deg, #e9fbff, #7fb8d8 48%, #315783);
+  box-shadow: 0 0 0 7px rgba(73,113,152,.65), 0 0 55px rgba(132,217,255,.38);
+  clip-path: polygon(50% 0, 91% 17%, 100% 78%, 73% 100%, 27% 100%, 0 78%, 9% 17%);
+}
+
 .event-story {
   display: flex;
   flex-direction: column;
@@ -3966,6 +3978,351 @@
     min-height: 46px;
     padding: 0 12px;
     font-size: 9px;
+  }
+}
+
+/* Frostglas-Höhlen: eigener visueller Dungeon-Charakter */
+.dungeon-theme-frost {
+  background:
+    radial-gradient(circle at 50% 12%, rgba(102, 191, 232, .22), transparent 34rem),
+    #121b32;
+}
+
+.dungeon-theme-frost .run-topbar {
+  border-bottom-color: rgba(153, 224, 255, .2);
+  background: rgba(17, 27, 51, .95);
+}
+
+.dungeon-theme-frost .run-location span,
+.dungeon-theme-frost .chapter-kicker,
+.dungeon-theme-frost .path-current-destination span,
+.dungeon-theme-frost .route-room-copy small {
+  color: #8edcff;
+}
+
+.dungeon-theme-frost .dungeon-path-view {
+  background:
+    radial-gradient(circle at 72% 5%, rgba(132, 222, 255, .18), transparent 30rem),
+    linear-gradient(180deg, #182b4a 0%, #14243e 48%, #0e182d 100%);
+}
+
+.dungeon-theme-frost .full-dungeon-map {
+  border-color: rgba(174, 231, 255, .34);
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(122, 191, 221, .58), transparent 68%),
+    linear-gradient(180deg, #759dc0 0%, #527a9b 43%, #31536e 44%, #172d48 100%);
+  box-shadow: 0 24px 70px rgba(2, 9, 26, .5), inset 0 1px rgba(255,255,255,.2);
+}
+
+.dungeon-theme-frost .full-dungeon-map::before {
+  background: #17334c;
+  box-shadow: 41vw -2vw 0 #244b67, 77vw 3vw 0 #112e48;
+}
+
+.dungeon-theme-frost .full-dungeon-map::after {
+  background: #d5f4ff;
+  box-shadow: 16vw 2vw 0 #9fd7e9, 39vw -1vw 0 #c4ecf7, 61vw 2vw 0 #8cc8df, 83vw -1vw 0 #d6f5ff;
+  opacity: .42;
+  clip-path: polygon(0 100%, 18% 10%, 34% 100%, 52% 0, 69% 100%, 84% 16%, 100% 100%);
+}
+
+.dungeon-theme-frost .dungeon-sky i {
+  width: 8px;
+  height: 8px;
+  border-radius: 1px 50% 1px 50%;
+  background: #e6fbff;
+  box-shadow: 0 0 14px #b9edff;
+  transform: rotate(45deg);
+}
+
+.dungeon-theme-frost .route-trunk,
+.dungeon-theme-frost .route-branch,
+.dungeon-theme-frost .route-boss::before {
+  border-color: rgba(213, 244, 255, .58);
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.18) 0 8px, transparent 8px 15px),
+    #71a9c5;
+  box-shadow: 0 5px 0 rgba(19, 50, 75, .48);
+}
+
+.dungeon-theme-frost .route-junction,
+.dungeon-theme-frost .route-rejoin {
+  border-color: #c8f2ff;
+  background: #315f7e;
+  box-shadow: 0 0 0 5px rgba(21, 55, 82, .72);
+}
+
+.dungeon-theme-frost .route-junction i,
+.dungeon-theme-frost .route-rejoin i {
+  background: #bdeeff;
+}
+
+.dungeon-theme-frost .route-room {
+  border-color: rgba(191, 233, 255, .22);
+  background: rgba(19, 43, 67, .94);
+}
+
+.dungeon-theme-frost .route-room.was-chosen {
+  border-color: #8edcff;
+  background: rgba(30, 87, 117, .95);
+}
+
+.dungeon-theme-frost .route-room.selected {
+  border-color: #d3f4ff;
+  background: #315f7e;
+  box-shadow: 0 0 0 5px rgba(142, 220, 255, .2), 0 16px 34px rgba(4,15,29,.55);
+}
+
+.dungeon-theme-frost .route-room.selected::after,
+.dungeon-theme-frost .path-touch-controls button.active {
+  color: #163047;
+  border-color: #d8f7ff;
+  background: #aee7fa;
+}
+
+.dungeon-theme-frost .route-boss > span {
+  border-color: #bcefff;
+  background: radial-gradient(circle, #6baac9, #2a426d);
+  box-shadow: 0 0 0 8px rgba(70, 147, 184, .24), 0 0 35px rgba(139, 222, 255, .3);
+}
+
+.dungeon-theme-frost .route-boss small {
+  color: #9cddf6;
+}
+
+.dungeon-theme-frost .powerup-view {
+  background:
+    radial-gradient(circle at 50% 20%, rgba(105, 201, 239, .23), transparent 27rem),
+    linear-gradient(150deg, #274a65, #151b32 62%);
+}
+
+.dungeon-theme-frost .powerup-grid button {
+  background: linear-gradient(180deg, rgba(57, 117, 151, .48), rgba(27, 34, 58, .9));
+}
+
+.dungeon-theme-frost .powerup-icon {
+  color: #e3faff;
+  border-color: #82d5f3;
+  background: radial-gradient(circle, #63b7d4, #314d6d);
+}
+
+.dungeon-theme-frost .event-view {
+  background: #15213a;
+}
+
+.dungeon-theme-frost .event-art {
+  background:
+    radial-gradient(circle at 50% 45%, rgba(150, 228, 255, .18), transparent 27rem),
+    linear-gradient(160deg, #355c78, #16233b);
+}
+
+.dungeon-theme-frost .event-ground {
+  background: #1c3c55;
+}
+
+.dungeon-theme-frost .boss-intro-art {
+  background:
+    radial-gradient(circle at 50% 35%, rgba(129, 221, 255, .22), transparent 25%),
+    linear-gradient(150deg, #315a77, #131a31 70%);
+}
+
+.dungeon-theme-frost .boss-tree-crown {
+  top: -8%;
+  height: 65%;
+  border-radius: 0;
+  background: linear-gradient(165deg, #d9f8ff, #70bad7 42%, #284c74);
+  clip-path: polygon(0 0, 12% 68%, 25% 12%, 36% 75%, 49% 4%, 62% 73%, 76% 15%, 88% 68%, 100% 0);
+  opacity: .72;
+}
+
+.dungeon-theme-frost .boss-silhouette {
+  background: linear-gradient(90deg, #1b2740, #4b7192, #17223b);
+  clip-path: polygon(38% 0, 62% 0, 70% 12%, 84% 4%, 79% 27%, 93% 49%, 78% 57%, 92% 100%, 8% 100%, 22% 57%, 7% 49%, 21% 27%, 16% 4%, 30% 12%);
+}
+
+.dungeon-theme-frost .boss-eye {
+  background: #bdf5ff;
+  box-shadow: 0 0 16px #8ee7ff;
+}
+
+.dungeon-theme-frost .boss-intro-copy > div span {
+  color: #8edcff;
+}
+
+.dungeon-theme-frost .boss-intro-copy button {
+  border-color: #74c7e8;
+  background: linear-gradient(#397da2, #23577d);
+}
+
+.dungeon-theme-frost .battle-stage {
+  background:
+    radial-gradient(circle at 55% 20%, rgba(226, 250, 255, .28), transparent 22rem),
+    linear-gradient(#6d9ebb, #90bbca 55%, #476d88 56%, #29455f);
+}
+
+.dungeon-theme-frost .battle-canopy {
+  width: 340px;
+  height: 300px;
+  border-radius: 0;
+  background: linear-gradient(145deg, #e2f9ff, #73b7d0 55%, #315b7c);
+  clip-path: polygon(0 0, 100% 0, 86% 76%, 72% 29%, 56% 92%, 39% 34%, 24% 83%, 10% 25%);
+  opacity: .75;
+}
+
+.dungeon-theme-frost .battle-ground {
+  background:
+    repeating-linear-gradient(105deg, transparent 0 75px, rgba(210,245,255,.13) 76px 79px),
+    radial-gradient(ellipse at 50% 10%, rgba(235,252,255,.25), transparent 42%),
+    #31516b;
+}
+
+.enemy-ice-wisp .enemy-body,
+.enemy-ice-wisp .enemy-head {
+  border-color: #4b89a8;
+  background: linear-gradient(90deg, #70bad7, #d6f6ff, #5296bc);
+}
+
+.enemy-ice-wisp .enemy-body {
+  height: 76px;
+  border-radius: 50% 50% 70% 70%;
+  clip-path: polygon(50% 0, 100% 38%, 73% 100%, 50% 78%, 27% 100%, 0 38%);
+}
+
+.enemy-ice-wisp .enemy-ear,
+.enemy-ice-wisp .enemy-weapon {
+  display: none;
+}
+
+.enemy-ice-wisp .enemy-eye {
+  background: #214d78;
+  box-shadow: 0 0 7px #d7f8ff;
+}
+
+.enemy-frost-wolf .enemy-body {
+  width: 68%;
+  height: 70px;
+  left: 16%;
+  border-color: #3d6889;
+  border-radius: 60% 40% 30% 30%;
+  background: linear-gradient(90deg, #5e8eac, #b5dce9, #5680a2);
+}
+
+.enemy-frost-wolf .enemy-head { left: 54%; bottom: 108px; width: 43%; border-color: #3d6889; background: #8fc0d3; }
+.enemy-frost-wolf .enemy-ear.ear-a { left: 59%; bottom: 148px; background: #76abc3; }
+.enemy-frost-wolf .enemy-ear.ear-b { right: 0; bottom: 148px; background: #76abc3; }
+.enemy-frost-wolf .enemy-eye.eye-a { left: 72%; bottom: 130px; background: #d8fbff; box-shadow: 0 0 8px #8fe9ff; }
+.enemy-frost-wolf .enemy-eye.eye-b { display: none; }
+
+.enemy-crystal-golem {
+  scale: 1.22;
+}
+
+.enemy-crystal-golem .enemy-body,
+.enemy-crystal-golem .enemy-head {
+  border-color: #3e668c;
+  border-radius: 18% 38% 22% 34%;
+  background: linear-gradient(120deg, #5a92ba, #d2f6ff 46%, #4b77a5);
+  clip-path: polygon(50% 0, 100% 25%, 85% 100%, 16% 100%, 0 25%);
+}
+
+.enemy-crystal-golem .enemy-weapon {
+  display: none;
+}
+
+.enemy-ice-queen {
+  scale: 1.58;
+}
+
+.enemy-ice-queen .enemy-body {
+  height: 120px;
+  border-color: #4679a8;
+  border-radius: 45% 45% 10% 10%;
+  background: linear-gradient(90deg, #385d91, #8fd4e9, #2c477c);
+  clip-path: polygon(35% 0, 65% 0, 100% 100%, 0 100%);
+}
+
+.enemy-ice-queen .enemy-head {
+  border-color: #4679a8;
+  background: #a5d9e7;
+}
+
+.enemy-ice-queen .enemy-ear {
+  bottom: 167px;
+  border-radius: 0;
+  background: #d7f7ff;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.enemy-ice-queen .enemy-eye {
+  background: #e8fdff;
+  box-shadow: 0 0 10px #72dcff;
+}
+
+.frost-wave-indicator {
+  min-width: 210px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: absolute;
+  z-index: 9;
+  right: clamp(15px, 3vw, 48px);
+  top: 16px;
+  padding: 9px 13px;
+  color: #e7faff;
+  border: 1px solid rgba(163, 228, 255, .42);
+  border-radius: 13px;
+  background: rgba(24, 59, 88, .84);
+  box-shadow: 0 8px 24px rgba(5, 20, 38, .28);
+  backdrop-filter: blur(8px);
+}
+
+.boss-health-banner + .frost-wave-indicator {
+  top: 82px;
+}
+
+.frost-wave-indicator > .game-icon {
+  width: 30px;
+  height: 30px;
+  color: #bceeff;
+}
+
+.frost-wave-indicator span {
+  display: grid;
+  gap: 2px;
+}
+
+.frost-wave-indicator b {
+  font-size: 10px;
+  letter-spacing: .1em;
+}
+
+.frost-wave-indicator small {
+  color: #a9d4e5;
+  font-size: 9px;
+}
+
+.float-warning {
+  color: #e9fbff !important;
+  background: rgba(40, 110, 156, .88) !important;
+  text-shadow: 0 1px #244b70;
+}
+
+@media (max-width: 600px) {
+  .frost-wave-indicator {
+    min-width: 0;
+    left: 12px;
+    right: auto;
+    top: 58px;
+    padding: 7px 9px;
+  }
+
+  .boss-health-banner + .frost-wave-indicator {
+    top: 94px;
+  }
+
+  .frost-wave-indicator > .game-icon {
+    width: 24px;
+    height: 24px;
   }
 }
 

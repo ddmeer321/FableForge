@@ -12,13 +12,13 @@ export function DungeonSelect({
   onEditTeam,
 }: {
   progress: PlayerProgress;
-  onStart: () => void;
+  onStart: (dungeonId: string) => void;
   onEditTeam: () => void;
 }) {
   const [selectedId, setSelectedId] = useState("whispering-woods");
   const selected = DUNGEONS.find((dungeon) => dungeon.id === selectedId) ?? DUNGEONS[0];
   const unlocked = progress.unlockedDungeons.includes(selected.id);
-  const playable = selected.id === "whispering-woods" && unlocked;
+  const playable = ["whispering-woods", "frostglass-cavern"].includes(selected.id) && unlocked;
   const power = teamPower(progress);
 
   return (
@@ -83,8 +83,8 @@ export function DungeonSelect({
               <strong className={power >= selected.recommendedPower ? "ready" : "low"}>Dein Team: {power}</strong>
             </div>
             {playable ? (
-              <button className="enter-dungeon-button" disabled={!progress.team.length} onClick={onStart}>
-                FLÜSTERWALD BETRETEN
+              <button className="enter-dungeon-button" disabled={!progress.team.length} onClick={() => onStart(selected.id)}>
+                {selected.name.toLocaleUpperCase("de-DE")} BETRETEN
               </button>
             ) : (
               <button className="enter-dungeon-button" disabled>

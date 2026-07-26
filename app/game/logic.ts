@@ -157,7 +157,7 @@ export function teamPower(progress: PlayerProgress) {
   return progress.team.reduce((sum, slot) => sum + (totalHeroStats(progress, slot.heroId)?.power ?? 0), 0);
 }
 
-const ROOM_LIBRARY: Record<RoomType, Omit<RoomChoice, "id" | "type">[]> = {
+const FOREST_ROOM_LIBRARY: Record<RoomType, Omit<RoomChoice, "id" | "type">[]> = {
   fight: [
     { title: "Wurzelpfad", subtitle: "Waldlinge blockieren den Weg", danger: "Sicher", reward: "Gold & Erfahrung", icon: "swords" },
     { title: "Pilzlichtung", subtitle: "Kleine Sporenwesen lauern", danger: "Sicher", reward: "Gold & Heilpflanze", icon: "mushroom" },
@@ -188,31 +188,65 @@ const ROOM_LIBRARY: Record<RoomType, Omit<RoomChoice, "id" | "type">[]> = {
   ],
 };
 
-function room(type: RoomType, stage: number, index: number): RoomChoice {
-  const source = randomOf(ROOM_LIBRARY[type]);
+const FROST_ROOM_LIBRARY: Record<RoomType, Omit<RoomChoice, "id" | "type">[]> = {
+  fight: [
+    { title: "Splittersteg", subtitle: "Eislichter kreisen über dem Abgrund", danger: "Sicher", reward: "Gold & Erfahrung", icon: "snow" },
+    { title: "Raureif-Galerie", subtitle: "Frostwölfe wittern warme Spuren", danger: "Sicher", reward: "Gold & Wärmeessenz", icon: "claw" },
+  ],
+  elite: [
+    { title: "Spiegelarena", subtitle: "Zwei Alpha-Frostwölfe bewachen das Tor", danger: "Gefährlich", reward: "Seltene Frostbeute", icon: "swords" },
+  ],
+  treasure: [
+    { title: "Eingefrorene Schatzkammer", subtitle: "Eine Truhe steckt tief im blauen Eis", danger: "Unbekannt", reward: "Kristallschatz", icon: "chest" },
+  ],
+  merchant: [
+    { title: "Laternenlager", subtitle: "Händlerin Ylva schützt ihre letzte Flamme", danger: "Sicher", reward: "Wärme & Vorräte", icon: "shop" },
+  ],
+  healing: [
+    { title: "Thermalgrotte", subtitle: "Warmer Dampf steigt zwischen Kristallen auf", danger: "Sicher", reward: "Team-Regeneration", icon: "spring" },
+  ],
+  event: [
+    { title: "Flüsterspiegel", subtitle: "Dein Spiegelbild bewegt sich zu früh", danger: "Unbekannt", reward: "Frostsegen", icon: "snow" },
+  ],
+  risk: [
+    { title: "Knackendes Eisfeld", subtitle: "Der direkte Weg führt über dünnes Eis", danger: "Gefährlich", reward: "Kristalle & Risiko", icon: "risk" },
+  ],
+  miniboss: [
+    { title: "Kathedrale der Splitter", subtitle: "Der Kristallwächter erhebt sich", danger: "Gefährlich", reward: "Epische Chance", icon: "golem" },
+  ],
+  boss: [
+    { title: "Frostthron", subtitle: "Königin Skadi erwartet euch", danger: "Gefährlich", reward: "Bossbox & Dungeon-Beute", icon: "boss" },
+  ],
+};
+
+function room(type: RoomType, stage: number, index: number, dungeonId: string): RoomChoice {
+  const library = dungeonId === "frostglass-cavern" ? FROST_ROOM_LIBRARY : FOREST_ROOM_LIBRARY;
+  const source = randomOf(library[type]);
   return { ...source, id: `${stage}-${type}-${index}-${Math.floor(Math.random() * 9999)}`, type };
 }
 
-export function generateRoomChoices(stage: number): RoomChoice[] {
-  const layouts: RoomType[][] = [
-    ["fight", "event"],
-    ["treasure", "fight"],
-    ["elite", "healing"],
-    ["merchant", "fight"],
-    ["risk", "event"],
-    ["elite", "treasure"],
-    ["healing", "fight"],
-    ["elite", "merchant"],
-    ["risk", "fight"],
-    ["miniboss", "event"],
+export function generateRoomChoices(stage: number, dungeonId = "whispering-woods"): RoomChoice[] {
+  const forestLayouts: RoomType[][] = [
+    ["fight", "event"], ["treasure", "fight"], ["elite", "healing"], ["merchant", "fight"],
+    ["risk", "event"], ["elite", "treasure"], ["healing", "fight"], ["elite", "merchant"],
+    ["risk", "fight"], ["miniboss", "event"],
   ];
-  return shuffled(layouts[Math.min(stage, layouts.length - 1)]).map((type, index) => room(type, stage, index));
+  const frostLayouts: RoomType[][] = [
+    ["fight", "healing"], ["event", "fight"], ["elite", "treasure"], ["merchant", "risk"],
+    ["fight", "event"], ["elite", "healing"], ["treasure", "fight"], ["risk", "elite"],
+    ["merchant", "fight"], ["miniboss", "event"],
+  ];
+  const layouts = dungeonId === "frostglass-cavern" ? frostLayouts : forestLayouts;
+  return shuffled(layouts[Math.min(stage, layouts.length - 1)]).map(
+    (type, index) => room(type, stage, index, dungeonId),
+  );
 }
 
-export function createRun(): DungeonRun {
-  const routePlan = Array.from({ length: 10 }, (_, stage) => generateRoomChoices(stage));
+export function createRun(dungeonId = "whispering-woods"): DungeonRun {
+  const routePlan = Array.from({ length: 10 }, (_, stage) => generateRoomChoices(stage, dungeonId));
+  const frost = dungeonId === "frostglass-cavern";
   return {
-    dungeonId: "whispering-woods",
+    dungeonId,
     stage: 0,
     phase: "path",
     routePlan,
@@ -230,7 +264,9 @@ export function createRun(): DungeonRun {
     partyHp: {},
     bonusHealItems: 0,
     nextCombatEnergy: 0,
-    message: "Wähle den ersten Pfad in den Flüsterwald.",
+    message: frost
+      ? "Wähle den ersten Pfad in die Frostglas-Höhlen."
+      : "Wähle den ersten Pfad in den Flüsterwald.",
   };
 }
 
@@ -245,7 +281,59 @@ export function beginRoomTravel(run: DungeonRun, choice: RoomChoice): DungeonRun
   };
 }
 
-export function createEventForRoom(type: RoomType): RunEvent {
+export function createEventForRoom(type: RoomType, dungeonId = "whispering-woods"): RunEvent {
+  if (dungeonId === "frostglass-cavern") {
+    if (type === "treasure") {
+      return {
+        id: "frozen-chest",
+        title: "Die Truhe im blauen Eis",
+        story: "Unter einer klaren Eisschicht liegt eine königliche Truhe. Jeder Schlag lässt die Decke knacken.",
+        artwork: "chest",
+        choices: [
+          { id: "shatter", label: "Eis zerschlagen", consequence: "+220 Gold, aber das Team verliert 12 % Leben." },
+          { id: "thaw", label: "Für 90 Gold auftauen", consequence: "Sicher öffnen und eine Heilration finden." },
+          { id: "leave-ice", label: "Fundort markieren", consequence: "+1 Schlüssel am Ende des Runs." },
+        ],
+      };
+    }
+    if (type === "merchant") {
+      return {
+        id: "flame-merchant",
+        title: "Ylvas letzte Flamme",
+        story: "Die Händlerin kauert an einer winzigen Laterne. Ohne Brennstoff übersteht niemand die nächste Frostwelle.",
+        artwork: "merchant",
+        choices: [
+          { id: "share-flame", label: "Brennstoff teilen", consequence: "Das Team heilt 25 % und erhält eine Heilration." },
+          { id: "steal-flame", label: "Die Laterne nehmen", consequence: "+260 Gold, aber ihre Frostwölfe greifen an." },
+          { id: "pass-camp", label: "Weiterziehen", consequence: "Keine Wirkung." },
+        ],
+      };
+    }
+    if (type === "healing") {
+      return {
+        id: "thermal-grotto",
+        title: "Die Thermalquelle",
+        story: "Heißer Dampf füllt eine geschützte Grotte. Die Wärme reicht nur für eine kurze Rast.",
+        artwork: "spring",
+        choices: [
+          { id: "thermal-rest", label: "Gemeinsam rasten", consequence: "Heilt das Team um 40 %." },
+          { id: "thermal-bottle", label: "Wasser abfüllen", consequence: "+1 Heilitem für kommende Kämpfe." },
+          { id: "focus-crystal", label: "Kristalle fokussieren", consequence: "+25 Startenergie im nächsten Kampf." },
+        ],
+      };
+    }
+    return {
+      id: "frost-mirror",
+      title: "Der Flüsterspiegel",
+      story: "Im Eis erscheint eine Zukunft, in der euer Team den Frostthron erreicht. Das Bild verlangt Wärme als Preis.",
+      artwork: "mirror",
+      choices: [
+        { id: "touch-mirror", label: "Das Spiegelbild berühren", consequence: "Verliere 20 % Leben und erhalte einen mächtigen Frostsegen." },
+        { id: "melt-mirror", label: "140 Gold opfern", consequence: "Kristallschilde schützen jede Frostwelle." },
+        { id: "walk-away", label: "Dem Bild misstrauen", consequence: "Der Weg bleibt sicher." },
+      ],
+    };
+  }
   if (type === "treasure") {
     return {
       id: "broken-chest",
@@ -298,9 +386,13 @@ export function createEventForRoom(type: RoomType): RunEvent {
   };
 }
 
-export function selectRunBuffs(existing: RunBuff[]) {
+export function selectRunBuffs(existing: RunBuff[], dungeonId = "whispering-woods") {
   const existingIds = new Set(existing.map((buff) => buff.id));
-  const pool = RUN_BUFFS.filter((buff) => !existingIds.has(buff.id));
+  const frostIds = new Set(["warm-core", "crystal-guard", "shatterpoint", "shelter-thaw"]);
+  const pool = RUN_BUFFS.filter((buff) => {
+    if (existingIds.has(buff.id)) return false;
+    return dungeonId === "frostglass-cavern" || !frostIds.has(buff.id);
+  });
   return shuffled(pool).slice(0, 3);
 }
 
@@ -326,7 +418,22 @@ function enemy(
   };
 }
 
-function enemiesForRoom(type: RoomType): CombatEnemy[] {
+function enemiesForRoom(type: RoomType, dungeonId: string): CombatEnemy[] {
+  if (dungeonId === "frostglass-cavern") {
+    if (type === "boss") return [enemy("skadi", "Königin Skadi", "ice-queen", 2700, 34, 12, true)];
+    if (type === "miniboss") return [enemy("crystal-sentinel", "Kristallwächter", "crystal-golem", 1150, 30, 12)];
+    if (type === "elite") {
+      return [
+        enemy("frost-wolf-a", "Alpha-Frostwolf", "frost-wolf", 470, 25, 6),
+        enemy("frost-wolf-b", "Alpha-Frostwolf", "frost-wolf", 470, 25, 6),
+      ];
+    }
+    return [
+      enemy("ice-wisp-a", "Eislicht", "ice-wisp", 270, 18, 4),
+      enemy("ice-wisp-b", "Eislicht", "ice-wisp", 270, 18, 4),
+      enemy("frost-hunter", "Frostwolf", "frost-wolf", 360, 22, 5),
+    ];
+  }
   if (type === "boss") return [enemy("nox", "Waldhüter Nox", "boss", 1900, 27, 9, true)];
   if (type === "miniboss") return [enemy("bark-golem", "Rindenkoloss", "golem", 800, 25, 8)];
   if (type === "elite") {
@@ -350,9 +457,11 @@ export function createCombat(
   bonusHealItems = 0,
   partyHp: Record<string, number> = {},
   nextCombatEnergy = 0,
+  dungeonId = "whispering-woods",
 ): CombatState {
   const start = Date.now();
   const wildForce = buffs.some((buff) => buff.id === "wild-force");
+  const shatterpoint = dungeonId === "frostglass-cavern" && buffs.some((buff) => buff.id === "shatterpoint");
   const heroes = team
     .map((slot) => {
       const stats = totalHeroStats(progress, slot.heroId);
@@ -361,7 +470,7 @@ export function createCombat(
         heroId: slot.heroId,
         hp: Math.round(stats.hp * (partyHp[slot.heroId] ?? 1)),
         maxHp: stats.hp,
-        attack: Math.round(stats.attack * (wildForce ? 1.2 : 1)),
+        attack: Math.round(stats.attack * (wildForce ? 1.2 : 1) * (shatterpoint ? 1.15 : 1)),
         defense: Math.max(0, Math.round(stats.defense * (wildForce ? 0.92 : 1))),
         speed: stats.speed,
         energy: clamp((getHero(slot.heroId)?.id === "solenne" ? 20 : 0) + nextCombatEnergy, 0, 100),
@@ -377,8 +486,9 @@ export function createCombat(
     .filter((hero): hero is CombatHero => Boolean(hero));
 
   return {
+    dungeonId,
     heroes,
-    enemies: enemiesForRoom(type),
+    enemies: enemiesForRoom(type, dungeonId),
     shelterHeroId: null,
     paused: false,
     outcome: null,
@@ -386,10 +496,14 @@ export function createCombat(
     healItems: 2 + bonusHealItems,
     powerTonics: 1,
     switchReadyAt: 0,
-    log: ["Der Kampf beginnt. Fähigkeiten laden sich durch Angriffe auf.", "Wähle Ziele und nutze den Schutzraum."],
+    log: dungeonId === "frostglass-cavern"
+      ? ["Der Frost reagiert auf jede Bewegung.", "Der Schutzraum bewahrt einen Helden vor Frostwellen."]
+      : ["Der Kampf beginnt. Fähigkeiten laden sich durch Angriffe auf.", "Wähle Ziele und nutze den Schutzraum."],
     effects: [],
     effectSequence: 0,
     damageDone: 0,
+    environmentNextAt: dungeonId === "frostglass-cavern" ? start + 7000 : Number.POSITIVE_INFINITY,
+    environmentPulse: 0,
     startedAt: start,
     lastTick: start,
   };
@@ -432,6 +546,8 @@ export function tickCombat(state: CombatState, buffs: RunBuff[]): CombatState {
   let sequence = state.effectSequence;
   let shelterHeroId = state.shelterHeroId;
   let damageDone = state.damageDone;
+  let environmentNextAt = state.environmentNextAt;
+  let environmentPulse = state.environmentPulse;
 
   const sheltered = heroes.find((hero) => hero.heroId === shelterHeroId && hero.hp > 0);
   if (sheltered) {
@@ -448,6 +564,45 @@ export function tickCombat(state: CombatState, buffs: RunBuff[]): CombatState {
         sheltered.hp + sheltered.maxHp * 0.018 * healerBonus * buffBonus * deltaSeconds,
       );
     }
+    if (
+      state.dungeonId === "frostglass-cavern" &&
+      buffs.some((buff) => buff.id === "shelter-thaw") &&
+      time >= environmentNextAt
+    ) {
+      sheltered.energy = clamp(sheltered.energy + 25, 0, 100);
+    }
+  }
+
+  if (state.dungeonId === "frostglass-cavern" && time >= environmentNextAt) {
+    environmentPulse += 1;
+    const deepFreeze = environmentPulse % 3 === 0;
+    const warmCore = buffs.some((buff) => buff.id === "warm-core");
+    const crystalGuard = buffs.some((buff) => buff.id === "crystal-guard");
+    const delay = (deepFreeze ? 1800 : 900) * (warmCore ? 0.5 : 1);
+
+    heroes
+      .filter((hero) => hero.hp > 0 && hero.heroId !== shelterHeroId)
+      .forEach((hero) => {
+        hero.nextAction += delay;
+        if (crystalGuard) hero.shield += 16;
+        sequence += 1;
+        effects = addEffect(
+          effects,
+          sequence,
+          deepFreeze ? "warning" : crystalGuard ? "shield" : "warning",
+          deepFreeze ? "EINGEFROREN" : crystalGuard ? "+16 SCHILD" : "FROST",
+          hero.heroId,
+        );
+      });
+
+    log = appendLog(
+      log,
+      deepFreeze
+        ? "Tieffrost! Das aktive Team wird kurz eingefroren."
+        : "Eine Frostwelle verlangsamt alle Helden außerhalb des Schutzraums.",
+    );
+    const bossAlive = enemies.some((entry) => entry.boss && entry.hp > 0);
+    environmentNextAt = time + (bossAlive ? 5600 : 7600);
   }
 
   for (const hero of heroes) {
@@ -499,6 +654,8 @@ export function tickCombat(state: CombatState, buffs: RunBuff[]): CombatState {
       effectSequence: sequence,
       shelterHeroId,
       damageDone,
+      environmentNextAt,
+      environmentPulse,
       lastTick: time,
       outcome: "victory",
       log: appendLog(log, "Der Raum ist gesichert!"),
@@ -553,6 +710,8 @@ export function tickCombat(state: CombatState, buffs: RunBuff[]): CombatState {
     effectSequence: sequence,
     shelterHeroId,
     damageDone,
+    environmentNextAt,
+    environmentPulse,
     log,
     lastTick: time,
     outcome,

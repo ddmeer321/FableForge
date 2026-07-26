@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { getHero } from "../game/data";
+import { getDungeon, getHero } from "../game/data";
 import type { DungeonRun, PlayerProgress, RunRewards } from "../game/types";
 import type { DungeonRunController } from "../game/use-dungeon-run";
 import { GameIcon, HeroPortrait } from "./shared";
@@ -19,13 +19,18 @@ function RunTopbar({
 }) {
   const [confirmRetreat, setConfirmRetreat] = useState(false);
   const combat = run.combat;
+  const dungeon = getDungeon(run.dungeonId);
+  const frost = run.dungeonId === "frostglass-cavern";
 
   return (
     <>
       <header className="run-topbar">
         <div className="run-location">
           <button onClick={() => setConfirmRetreat(true)} aria-label="Rückzug vorbereiten"><GameIcon name="retreat" /></button>
-          <div><span>FLÜSTERWALD · UNKARTIERT</span><strong>{run.currentRoom?.title ?? (run.phase === "bossIntro" ? "Herzbaum" : "Pfad im Nebel")}</strong></div>
+          <div>
+            <span>{dungeon?.name.toLocaleUpperCase("de-DE")} · UNKARTIERT</span>
+            <strong>{run.currentRoom?.title ?? (run.phase === "bossIntro" ? (frost ? "Frostthron" : "Herzbaum") : (frost ? "Pfad im Eisnebel" : "Pfad im Nebel"))}</strong>
+          </div>
         </div>
         <div className="run-progress run-progress-mystery" aria-label="Die Länge des Dungeons ist unbekannt">
           <i className="current"><GameIcon name="route" /></i>
@@ -202,6 +207,8 @@ function ContinuousDungeonPath({
   const visibleHistory = run.pathHistory
     .slice(0, isWalking ? -1 : run.pathHistory.length)
     .slice(-3);
+  const frost = run.dungeonId === "frostglass-cavern";
+  const dungeon = getDungeon(run.dungeonId);
 
   useEffect(() => {
     if (!isWalking || !run.currentRoom) return;
@@ -245,12 +252,12 @@ function ContinuousDungeonPath({
     <section className={`dungeon-path-view ${isWalking ? "is-walking" : ""}`} aria-live="polite">
       <div className="dungeon-path-heading">
         <div>
-          <span className="chapter-kicker">NEBELPFAD · KARTE UNVOLLSTÄNDIG</span>
+          <span className="chapter-kicker">{frost ? "EISNEBEL · KARTE UNVOLLSTÄNDIG" : "NEBELPFAD · KARTE UNVOLLSTÄNDIG"}</span>
           <h1>{isWalking ? `Unterwegs: ${destination?.title}` : "Vor dir teilt sich der Weg"}</h1>
           <p>
             {isWalking
-              ? "Die Gruppe läuft den gewählten Abschnitt. Am Ziel beginnt die Begegnung."
-              : "Nur eure Spuren und die nächste Abzweigung sind sichtbar. Alles Weitere verbirgt der Nebel."}
+              ? `Die Gruppe läuft den gewählten Abschnitt. ${frost ? "Das Eis knackt unter jedem Schritt." : "Am Ziel beginnt die Begegnung."}`
+              : `Nur eure Spuren und die nächste Abzweigung sind sichtbar. Alles Weitere verbirgt ${frost ? "der Eisnebel" : "der Nebel"}.`}
           </p>
         </div>
         <div className="path-key-hint">
@@ -375,7 +382,7 @@ function ContinuousDungeonPath({
           <div className="route-boss" aria-label="Boss am Ende des Weges">
             <span><GameIcon name="boss" /></span>
             <small>ENDZIEL</small>
-            <strong>Waldhüter Nox</strong>
+            <strong>{dungeon?.boss ?? "Unbekannter Boss"}</strong>
           </div>
         </div>
 
@@ -456,7 +463,9 @@ function EventView({ run, actions }: { run: DungeonRun; actions: RunActions }) {
           {event.choices.map((choice) => {
             const insufficientGold =
               (choice.id === "repair" && run.earnedGold < 80) ||
-              (choice.id === "pay" && run.earnedGold < 120);
+              (choice.id === "pay" && run.earnedGold < 120) ||
+              (choice.id === "thaw" && run.earnedGold < 90) ||
+              (choice.id === "melt-mirror" && run.earnedGold < 140);
             return (
               <button disabled={insufficientGold} onClick={() => actions.resolveEvent(choice.id)} key={choice.id}>
                 <span><b>{choice.label}</b><small>{choice.consequence}</small></span>
@@ -471,10 +480,11 @@ function EventView({ run, actions }: { run: DungeonRun; actions: RunActions }) {
 }
 
 function PowerupView({ run, actions }: { run: DungeonRun; actions: RunActions }) {
+  const frost = run.dungeonId === "frostglass-cavern";
   return (
     <section className="powerup-view">
       <div className="powerup-heading">
-        <span className="chapter-kicker">WALDSEGEN {run.buffs.length + 1} / 3</span>
+        <span className="chapter-kicker">{frost ? "KRISTALLSEGEN" : "WALDSEGEN"} {run.buffs.length + 1} / 3</span>
         <h1>Wähle eine Kraft</h1>
         <p>Sie gilt nur für diesen Run und kann deinen Build grundlegend verändern.</p>
       </div>
@@ -493,7 +503,8 @@ function PowerupView({ run, actions }: { run: DungeonRun; actions: RunActions })
   );
 }
 
-function BossIntro({ actions }: { actions: RunActions }) {
+function BossIntro({ run, actions }: { run: DungeonRun; actions: RunActions }) {
+  const frost = run.dungeonId === "frostglass-cavern";
   return (
     <section className="boss-intro">
       <div className="boss-intro-art">
@@ -504,11 +515,13 @@ function BossIntro({ actions }: { actions: RunActions }) {
         <span className="boss-fog" />
       </div>
       <div className="boss-intro-copy">
-        <span className="chapter-kicker">BOSS DES FLÜSTERWALDS</span>
-        <h1>WALDHÜTER NOX</h1>
-        <p>„Ihr habt meine Pfade betreten. Nun zeigt, ob ihr auch ihre Last tragen könnt.“</p>
+        <span className="chapter-kicker">{frost ? "BOSS DER FROSTGLAS-HÖHLEN" : "BOSS DES FLÜSTERWALDS"}</span>
+        <h1>{frost ? "KÖNIGIN SKADI" : "WALDHÜTER NOX"}</h1>
+        <p>{frost
+          ? "„Wärme ist nur eine Erinnerung. Legt sie vor meinem Thron ab.“"
+          : "„Ihr habt meine Pfade betreten. Nun zeigt, ob ihr auch ihre Last tragen könnt.“"}</p>
         <div><span>VORBEREITUNG</span><strong>Fähigkeiten, Schutzraum und alle Run-Buffs bleiben erhalten.</strong></div>
-        <button onClick={actions.startBoss}>DEN HERZBAUM BETRETEN</button>
+        <button onClick={actions.startBoss}>{frost ? "DEN FROSTTHRON BETRETEN" : "DEN HERZBAUM BETRETEN"}</button>
       </div>
     </section>
   );
@@ -614,6 +627,8 @@ function CombatView({
   const boss = combat.enemies.find((enemy) => enemy.boss);
   const livingEnemies = combat.enemies.filter((enemy) => enemy.hp > 0).length;
   const lowHealth = combat.heroes.some((hero) => hero.hp > 0 && hero.hp / hero.maxHp < 0.28);
+  const frost = run.dungeonId === "frostglass-cavern";
+  const frostSeconds = Math.max(0, Math.ceil((combat.environmentNextAt - combat.lastTick) / 1000));
 
   return (
     <section className={`combat-view ${combat.paused ? "paused" : ""} ${lowHealth ? "low-health-warning" : ""}`}>
@@ -626,6 +641,15 @@ function CombatView({
         </div>
       )}
       {!boss && <div className="enemy-counter">{livingEnemies} GEGNER VERBLEIBEND</div>}
+      {frost && (
+        <div className="frost-wave-indicator" aria-live="polite">
+          <GameIcon name="snow" />
+          <span>
+            <b>{combat.environmentPulse > 0 && (combat.environmentPulse + 1) % 3 === 0 ? "TIEFFROST NAHT" : "NÄCHSTE FROSTWELLE"}</b>
+            <small>{frostSeconds}s · Schutzraum bewahrt 1 Helden</small>
+          </span>
+        </div>
+      )}
 
       <div className="battle-stage">
         <span className="battle-canopy canopy-left" />
@@ -735,7 +759,7 @@ function CombatView({
               <GameIcon name="heal" /><span><b>HEILRATION</b><small>+28 % LP · {combat.healItems} übrig</small></span>
             </button>
             <button disabled={!sheltered || combat.powerTonics <= 0} onClick={() => actions.useItem("power")}>
-              <GameIcon name="power" /><span><b>WALDKRAFT</b><small>+35 % Angriff · {combat.powerTonics} übrig</small></span>
+              <GameIcon name="power" /><span><b>{frost ? "FROSTESSENZ" : "WALDKRAFT"}</b><small>+35 % Angriff · {combat.powerTonics} übrig</small></span>
             </button>
           </div>
           <button className="return-from-shelter" disabled={!sheltered || combat.switchReadyAt > combat.lastTick} onClick={actions.returnShelteredHero}>
@@ -752,7 +776,7 @@ function CombatView({
         <div className="combat-result-banner">
           <div>
             <span>{combat.outcome === "victory" ? "RAUM GESICHERT" : "TEAM BESIEGT"}</span>
-            <h2>{combat.outcome === "victory" ? "Der Weg ist frei!" : "Der Wald war stärker."}</h2>
+            <h2>{combat.outcome === "victory" ? "Der Weg ist frei!" : frost ? "Der Frost war stärker." : "Der Wald war stärker."}</h2>
             <p>{combat.outcome === "victory" ? `${combat.damageDone} Schaden verursacht.` : "Du kannst mit einem Teil des Goldes zurückkehren."}</p>
             <button onClick={actions.continueAfterCombat}>{combat.outcome === "victory" ? "WEITER ZUM PFAD" : "RUN BEENDEN"}</button>
           </div>
@@ -763,20 +787,24 @@ function CombatView({
 }
 
 function RewardView({ run, onClaim }: { run: DungeonRun; onClaim: (rewards: RunRewards) => void }) {
+  const frost = run.dungeonId === "frostglass-cavern";
   const rewards = useMemo<RunRewards>(() => ({
+    dungeonId: run.dungeonId,
     gold: run.earnedGold,
     keys: run.earnedKeys,
-    crystals: 18,
+    crystals: frost ? 28 : 18,
     bossKeys: 1,
     xp: run.earnedXp,
-  }), [run.earnedGold, run.earnedKeys, run.earnedXp]);
+  }), [frost, run.dungeonId, run.earnedGold, run.earnedKeys, run.earnedXp]);
 
   return (
     <section className="run-reward-view">
-      <div className="victory-emblem"><span>N</span><i /><b>✦</b></div>
-      <span className="chapter-kicker">FLÜSTERWALD ABGESCHLOSSEN</span>
-      <h1>Der Wald atmet wieder</h1>
-      <p>Nox erkennt eure Stärke an und überlässt euch das Siegel des Herzbaums.</p>
+      <div className="victory-emblem"><span>{frost ? "S" : "N"}</span><i /><b>✦</b></div>
+      <span className="chapter-kicker">{frost ? "FROSTGLAS-HÖHLEN ABGESCHLOSSEN" : "FLÜSTERWALD ABGESCHLOSSEN"}</span>
+      <h1>{frost ? "Der Frostthron zerbricht" : "Der Wald atmet wieder"}</h1>
+      <p>{frost
+        ? "Skadi überlässt euch die Krone aus Tauglas. In der Ferne glüht bereits der nächste Berg."
+        : "Nox erkennt eure Stärke an und überlässt euch das Siegel des Herzbaums."}</p>
       <div className="reward-summary-grid">
         <div><GameIcon name="gold" /><strong>{rewards.gold}</strong><span>Gold</span></div>
         <div><GameIcon name="key" /><strong>{rewards.keys}</strong><span>Schlüssel</span></div>
@@ -784,19 +812,28 @@ function RewardView({ run, onClaim }: { run: DungeonRun; onClaim: (rewards: RunR
         <div className="boss-reward"><GameIcon name="box" /><strong>1</strong><span>Bossbox</span></div>
       </div>
       <div className="xp-reward-line"><span>TEAM-ERFAHRUNG</span><strong>+{rewards.xp} XP für jeden Helden</strong></div>
-      <div className="unlocked-preview"><GameIcon name="snow" /><span><b>NEUER DUNGEON FREIGESCHALTET</b><small>Frostglas-Höhlen · spielbar in der nächsten Beta</small></span></div>
+      <div className="unlocked-preview">
+        <GameIcon name={frost ? "power" : "snow"} />
+        <span>
+          <b>NEUER DUNGEON FREIGESCHALTET</b>
+          <small>{frost ? "Glutgipfel · für eine kommende Beta" : "Frostglas-Höhlen · jetzt spielbar"}</small>
+        </span>
+      </div>
       <button onClick={() => onClaim(rewards)}>BELOHNUNGEN NEHMEN & ZUR LOBBY</button>
     </section>
   );
 }
 
 function DefeatView({ run, onRetreat }: { run: DungeonRun; onRetreat: () => void }) {
+  const frost = run.dungeonId === "frostglass-cavern";
   return (
     <section className="defeat-view">
       <span className="defeat-mark">×</span>
       <span className="chapter-kicker">RUN BEENDET</span>
-      <h1>Der Pfad endet hier</h1>
-      <p>Die nächste Gruppe wird aus deinen Entscheidungen lernen. Ein Teil des Goldes bleibt erhalten.</p>
+      <h1>{frost ? "Die Wärme erlischt" : "Der Pfad endet hier"}</h1>
+      <p>{frost
+        ? "Die Gruppe kehrt aus dem Eisnebel zurück. Beim nächsten Versuch kennt sie den Rhythmus der Frostwellen."
+        : "Die nächste Gruppe wird aus deinen Entscheidungen lernen. Ein Teil des Goldes bleibt erhalten."}</p>
       <div><span>Gesichert</span><strong>{Math.floor(run.earnedGold * 0.4)} Gold</strong></div>
       <button onClick={onRetreat}>ZURÜCK ZUM LUMENHAIN</button>
     </section>
@@ -816,15 +853,16 @@ export function DungeonRunView({
   onRetreat: () => void;
   onClaimRewards: (rewards: RunRewards) => void;
 }) {
+  const theme = getDungeon(run.dungeonId)?.theme ?? "forest";
   return (
-    <main className="dungeon-run-screen">
+    <main className={`dungeon-run-screen dungeon-theme-${theme}`}>
       <RunTopbar run={run} onRetreat={onRetreat} actions={actions} />
       {(run.phase === "path" || run.phase === "travel") && (
         <ContinuousDungeonPath run={run} progress={progress} actions={actions} />
       )}
       {run.phase === "event" && <EventView run={run} actions={actions} />}
       {run.phase === "powerup" && <PowerupView run={run} actions={actions} />}
-      {run.phase === "bossIntro" && <BossIntro actions={actions} />}
+      {run.phase === "bossIntro" && <BossIntro run={run} actions={actions} />}
       {run.phase === "combat" && <CombatView run={run} actions={actions} />}
       {run.phase === "reward" && <RewardView run={run} onClaim={onClaimRewards} />}
       {run.phase === "defeat" && <DefeatView run={run} onRetreat={onRetreat} />}

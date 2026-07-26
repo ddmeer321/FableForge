@@ -310,6 +310,7 @@ export const DUNGEONS: DungeonDefinition[] = [
     name: "Flüsterwald",
     subtitle: "Kapitel I",
     description: "Ein freundlicher Wald ist aus dem Takt geraten. Folge den Irrlichtern bis zu Nox.",
+    theme: "forest",
     difficulty: 1,
     recommendedPower: 320,
     boss: "Waldhüter Nox",
@@ -321,6 +322,7 @@ export const DUNGEONS: DungeonDefinition[] = [
     name: "Frostglas-Höhlen",
     subtitle: "Kapitel II",
     description: "Gefrorene Hallen, in denen jeder Schritt über das Eis entscheidet.",
+    theme: "frost",
     difficulty: 2,
     recommendedPower: 620,
     boss: "Königin Skadi",
@@ -332,6 +334,7 @@ export const DUNGEONS: DungeonDefinition[] = [
     name: "Glutgipfel",
     subtitle: "Kapitel III",
     description: "Lavaadern durchziehen die Festung eines uralten Feuerriesen.",
+    theme: "ember",
     difficulty: 3,
     recommendedPower: 980,
     boss: "Vulkanherz Arkon",
@@ -343,6 +346,7 @@ export const DUNGEONS: DungeonDefinition[] = [
     name: "Samtene Leere",
     subtitle: "Kapitel IV",
     description: "Der Dungeon verändert sich, sobald du glaubst, ihn verstanden zu haben.",
+    theme: "void",
     difficulty: 4,
     recommendedPower: 1420,
     boss: "Die Namenlose Form",
@@ -361,6 +365,10 @@ export const RUN_BUFFS: RunBuff[] = [
   { id: "wild-force", name: "Wilde Kraft", icon: "claw", description: "+20 % Angriff, aber 8 % weniger Rüstung." },
   { id: "last-light", name: "Letztes Licht", icon: "sun", description: "Einmal pro Kampf bleibt ein Held mit 1 Leben stehen." },
   { id: "shared-aegis", name: "Geteilter Schild", icon: "ward", description: "Überschüssige Heilung wird zu Schild." },
+  { id: "warm-core", name: "Warmer Kern", icon: "sun", description: "Frostwellen verzögern Helden nur halb so lange." },
+  { id: "crystal-guard", name: "Kristallwacht", icon: "shield", description: "Nach jeder Frostwelle erhält das aktive Team 16 Schild." },
+  { id: "shatterpoint", name: "Bruchstelle", icon: "burst", description: "In den Frostglas-Höhlen verursacht das Team 15 % mehr Schaden." },
+  { id: "shelter-thaw", name: "Taukammer", icon: "snow", description: "Der Held im Schutzraum lädt während einer Frostwelle 25 Energie." },
 ];
 
 export const CURRENCY_LABELS = {

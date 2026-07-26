@@ -10,12 +10,13 @@ verzweigten Roguelite-Dungeon.
 
 - geführter Einstieg mit kostenloser Helden- und Ausrüstungsbox
 - Helden-, Ausrüstungs- und Teamverwaltung
-- ein zufällig aufgebauter Wald-Dungeon mit mindestens zehn Abschnitten
+- zwei zufällig aufgebaute Dungeons mit jeweils mindestens zehn Abschnitten
 - sichtbare Wege, Kreuzungen und Nebel über noch unentdeckten Bereichen
 - halbautomatische Kämpfe mit aktiv auslösbaren Fähigkeiten
 - Nahkampf-, Fernkampf- und Heilungsanimationen
 - Schutzraum für einen vorübergehend geretteten Helden
 - Ereignisse, Händler, Heilräume, Eliten und ein Boss
+- Frostglas-Höhlen mit Frostwellen, Eisgegnern und Königin Skadi
 - temporäre Power-ups und Belohnungen
 - lokale Speicherung des Fortschritts im Browser
 - responsive Bedienung für Desktop, Tablet und Smartphone

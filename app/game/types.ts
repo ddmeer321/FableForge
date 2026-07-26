@@ -76,6 +76,7 @@ export type DungeonDefinition = {
   name: string;
   subtitle: string;
   description: string;
+  theme: "forest" | "frost" | "ember" | "void";
   difficulty: number;
   recommendedPower: number;
   boss: string;
@@ -194,7 +195,16 @@ export type CombatHero = {
 export type CombatEnemy = {
   id: string;
   name: string;
-  kind: "sprout" | "wolf" | "shaman" | "golem" | "boss";
+  kind:
+    | "sprout"
+    | "wolf"
+    | "shaman"
+    | "golem"
+    | "boss"
+    | "ice-wisp"
+    | "frost-wolf"
+    | "crystal-golem"
+    | "ice-queen";
   hp: number;
   maxHp: number;
   attack: number;
@@ -213,6 +223,7 @@ export type CombatEffect = {
 };
 
 export type CombatState = {
+  dungeonId: string;
   heroes: CombatHero[];
   enemies: CombatEnemy[];
   shelterHeroId: string | null;
@@ -226,6 +237,8 @@ export type CombatState = {
   effects: CombatEffect[];
   effectSequence: number;
   damageDone: number;
+  environmentNextAt: number;
+  environmentPulse: number;
   startedAt: number;
   lastTick: number;
 };
@@ -234,7 +247,7 @@ export type RunEvent = {
   id: string;
   title: string;
   story: string;
-  artwork: "statue" | "chest" | "merchant" | "spring";
+  artwork: "statue" | "chest" | "merchant" | "spring" | "mirror";
   choices: {
     id: string;
     label: string;
@@ -275,6 +288,7 @@ export type DungeonRun = {
 };
 
 export type RunRewards = {
+  dungeonId: string;
   gold: number;
   keys: number;
   crystals: number;

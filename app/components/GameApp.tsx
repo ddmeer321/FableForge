@@ -80,8 +80,8 @@ export function GameApp() {
     playSound("box");
   };
 
-  const startAdventure = () => {
-    runController.startRun();
+  const startAdventure = (dungeonId: string) => {
+    runController.startRun(dungeonId);
     setScreen("run");
     playSound("click");
   };

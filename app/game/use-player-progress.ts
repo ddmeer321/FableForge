@@ -282,9 +282,13 @@ export function usePlayerProgress() {
           hero.level += 1;
         }
       });
-      if (next.completedRuns === 1 && !next.unlockedDungeons.includes("frostglass-cavern")) {
+      if (rewards.dungeonId === "whispering-woods" && !next.unlockedDungeons.includes("frostglass-cavern")) {
         next.unlockedDungeons.push("frostglass-cavern");
         next.lastUnlockedDungeon = "Frostglas-Höhlen";
+      }
+      if (rewards.dungeonId === "frostglass-cavern" && !next.unlockedDungeons.includes("emberpeak")) {
+        next.unlockedDungeons.push("emberpeak");
+        next.lastUnlockedDungeon = "Glutgipfel";
       }
       return next;
     });
