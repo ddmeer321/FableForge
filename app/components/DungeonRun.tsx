@@ -16,14 +16,6 @@ function DungeonAtmosphere({ theme }: { theme: string }) {
       <span className="atmosphere-vignette" />
       <span className="atmosphere-haze haze-a" />
       <span className="atmosphere-haze haze-b" />
-      <div className="atmosphere-particles">
-        {ATMOSPHERE_PARTICLES.map((index) => (
-          <i
-            key={index}
-            style={{ "--particle-index": index } as React.CSSProperties}
-          />
-        ))}
-      </div>
     </div>
   );
 }
@@ -292,6 +284,11 @@ function ContinuousDungeonPath({
         aria-label="Nebelkarte mit gelaufenem Weg und aktueller Abzweigung"
       >
         <div className="dungeon-sky" aria-hidden="true"><i /><i /><i /></div>
+        <div className={`map-weather ${frost ? "map-snow" : "map-fireflies"}`} aria-hidden="true">
+          {ATMOSPHERE_PARTICLES.map((index) => (
+            <i key={index} style={{ "--particle-index": index } as React.CSSProperties} />
+          ))}
+        </div>
         <div className="path-speed-lines" aria-hidden="true">
           {ATMOSPHERE_PARTICLES.slice(0, 8).map((index) => (
             <i key={index} style={{ "--particle-index": index } as React.CSSProperties} />
@@ -470,15 +467,66 @@ function ContinuousDungeonPath({
   );
 }
 
+const EVENT_MOTIONS: Record<string, { motion: string; caption: string }> = {
+  open: { motion: "open", caption: "Das Schloss springt auf …" },
+  repair: { motion: "repair", caption: "Das Schloss wird vorsichtig repariert …" },
+  shatter: { motion: "shatter", caption: "Das Eis zerspringt um die Truhe …" },
+  thaw: { motion: "thaw", caption: "Die Eisschicht schmilzt langsam …" },
+  ignore: { motion: "mark", caption: "Der Fundort wird auf der Karte markiert …" },
+  "leave-ice": { motion: "mark", caption: "Der Fundort wird im Eis markiert …" },
+  help: { motion: "help", caption: "Pips Wunden werden versorgt …" },
+  "share-flame": { motion: "help", caption: "Die letzte Flamme wird geteilt …" },
+  rob: { motion: "steal", caption: "Eine Warenkiste wird genommen …" },
+  "steal-flame": { motion: "steal", caption: "Die Laterne wechselt den Besitzer …" },
+  leave: { motion: "leave", caption: "Die Gruppe zieht friedlich weiter …" },
+  "pass-camp": { motion: "leave", caption: "Die Gruppe bewahrt Abstand …" },
+  drink: { motion: "drink", caption: "Das Mondwasser heilt die Gruppe …" },
+  "thermal-rest": { motion: "drink", caption: "Warmer Dampf umhüllt die Gruppe …" },
+  bottle: { motion: "bottle", caption: "Eine Flasche füllt sich mit Mondwasser …" },
+  "thermal-bottle": { motion: "bottle", caption: "Thermalwasser wird sicher abgefüllt …" },
+  listen: { motion: "focus", caption: "Das Flüstern der Quelle wird lauter …" },
+  "focus-crystal": { motion: "focus", caption: "Kristalllicht sammelt sich …" },
+  sacrifice: { motion: "sacrifice", caption: "Die Statue nimmt ihren Preis …" },
+  pay: { motion: "pay", caption: "Goldene Runen erwachen …" },
+  decline: { motion: "leave", caption: "Die goldenen Augen schließen sich …" },
+  "touch-mirror": { motion: "touch", caption: "Das Spiegelbild greift nach Wärme …" },
+  "melt-mirror": { motion: "melt", caption: "Das Spiegelglas wird flüssig …" },
+  "walk-away": { motion: "leave", caption: "Das Spiegelbild verblasst …" },
+};
+
 function EventView({ run, actions }: { run: DungeonRun; actions: RunActions }) {
   const event = run.event;
+  const resolveEvent = actions.resolveEvent;
+  const [activeChoice, setActiveChoice] = useState<string | null>(null);
+  const eventMotion = activeChoice ? EVENT_MOTIONS[activeChoice] : null;
+
+  useEffect(() => {
+    if (!activeChoice) return;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timer = window.setTimeout(
+      () => resolveEvent(activeChoice),
+      reducedMotion ? 80 : 950,
+    );
+    return () => window.clearTimeout(timer);
+  }, [activeChoice, resolveEvent]);
+
   if (!event) return null;
   return (
-    <section className="event-view">
+    <section className={`event-view ${eventMotion ? `event-resolving action-${eventMotion.motion}` : ""}`}>
       <div className={`event-art event-art-${event.artwork}`}>
         <span className="event-glow" />
-        <span className="event-object" />
+        <span className="event-object" aria-hidden="true">
+          <i className="event-detail detail-a" />
+          <i className="event-detail detail-b" />
+          <b className="event-prop-effect" />
+        </span>
         <span className="event-ground" />
+        {eventMotion && (
+          <div className="event-action-caption" aria-live="polite">
+            <i />
+            <span>{eventMotion.caption}</span>
+          </div>
+        )}
       </div>
       <article className="event-story">
         <span className="chapter-kicker">ZUFALLSEREIGNIS</span>
@@ -492,9 +540,14 @@ function EventView({ run, actions }: { run: DungeonRun; actions: RunActions }) {
               (choice.id === "thaw" && run.earnedGold < 90) ||
               (choice.id === "melt-mirror" && run.earnedGold < 140);
             return (
-              <button disabled={insufficientGold} onClick={() => actions.resolveEvent(choice.id)} key={choice.id}>
+              <button
+                className={activeChoice === choice.id ? "selected" : ""}
+                disabled={insufficientGold || Boolean(activeChoice)}
+                onClick={() => setActiveChoice(choice.id)}
+                key={choice.id}
+              >
                 <span><b>{choice.label}</b><small>{choice.consequence}</small></span>
-                <strong>{insufficientGold ? "ZU WENIG RUN-GOLD" : "→"}</strong>
+                <strong>{insufficientGold ? "ZU WENIG RUN-GOLD" : activeChoice === choice.id ? "WIRD AUSGEFÜHRT …" : "→"}</strong>
               </button>
             );
           })}
@@ -821,7 +874,7 @@ function CombatView({
               {ATMOSPHERE_PARTICLES.slice(0, 8).map((index) => <i key={index} />)}
             </div>
           )}
-          <div>
+          <div className="combat-result-card">
             <span>{combat.outcome === "victory" ? "RAUM GESICHERT" : "TEAM BESIEGT"}</span>
             <h2>{combat.outcome === "victory" ? "Der Weg ist frei!" : frost ? "Der Frost war stärker." : "Der Wald war stärker."}</h2>
             <p>{combat.outcome === "victory" ? `${combat.damageDone} Schaden verursacht.` : "Du kannst mit einem Teil des Goldes zurückkehren."}</p>

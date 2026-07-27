@@ -60,9 +60,14 @@ test("ships immersive dungeon animation layers with an accessible fallback", asy
 
   assert.match(component, /DungeonAtmosphere/);
   assert.match(component, /battle-weather/);
+  assert.match(component, /map-weather/);
   assert.match(component, /combat-impact-ring/);
+  assert.match(component, /combat-result-card/);
+  assert.match(component, /EVENT_MOTIONS/);
   assert.match(component, /reward-celebration/);
   assert.match(css, /\.atmosphere-forest/);
   assert.match(css, /\.atmosphere-frost/);
+  assert.match(css, /@keyframes chest-lid-open/);
+  assert.doesNotMatch(css, /\.combat-result-banner\s*>\s*div\s*\{/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
 });
