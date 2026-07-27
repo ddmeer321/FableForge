@@ -1372,6 +1372,208 @@
   margin-top: 17px;
 }
 
+/* Team-Builder auf Desktop: nutzt große Monitore bewusst großzügiger. */
+@media (min-width: 1181px) {
+  .team-builder-screen {
+    width: min(1700px, 100%);
+    padding-right: clamp(36px, 4vw, 78px);
+    padding-left: clamp(36px, 4vw, 78px);
+  }
+
+  .team-builder-screen .page-title {
+    margin-bottom: 34px;
+  }
+
+  .team-builder-screen .page-title h1 {
+    font-size: clamp(52px, 4vw, 66px);
+  }
+
+  .team-builder-screen .page-title p {
+    max-width: 760px;
+    margin-top: 12px;
+    font-size: 16px;
+    line-height: 1.55;
+  }
+
+  .team-builder-screen .chapter-kicker {
+    font-size: 11px;
+  }
+
+  .team-builder-screen .team-power {
+    min-width: 150px;
+    padding: 15px 20px;
+    border: 1px solid rgba(89, 76, 160, .14);
+    border-radius: 17px;
+    background: rgba(255,255,255,.7);
+    text-align: center;
+    box-shadow: 0 12px 28px rgba(54, 45, 105, .08);
+  }
+
+  .team-builder-screen .team-power strong {
+    display: block;
+    font-size: 38px;
+  }
+
+  .team-builder-screen .team-power span {
+    font-size: 10px;
+    letter-spacing: .12em;
+  }
+
+  .team-builder-screen .formation-board {
+    border-radius: 30px;
+  }
+
+  .team-builder-screen .formation-lanes {
+    padding: 15px;
+    font-size: 10px;
+  }
+
+  .team-builder-screen .team-slots {
+    grid-template-columns: repeat(4, minmax(230px, 1fr));
+    gap: 16px;
+    padding: 22px;
+  }
+
+  .team-builder-screen .team-slot-card,
+  .team-builder-screen .empty-team-slot {
+    min-height: 500px;
+    padding: 20px;
+    border-radius: 22px;
+  }
+
+  .team-builder-screen .team-slot-card {
+    align-content: start;
+  }
+
+  .team-builder-screen .team-slot-card .portrait-medium {
+    width: 116px;
+    height: 128px;
+    border-width: 4px;
+  }
+
+  .team-builder-screen .team-order {
+    left: 14px;
+    top: 14px;
+    width: 34px;
+    height: 34px;
+    font-size: 12px;
+    box-shadow: 0 6px 13px color-mix(in srgb, var(--hero-accent) 27%, transparent);
+  }
+
+  .team-builder-screen .team-hero-name {
+    margin: 10px 0 13px;
+  }
+
+  .team-builder-screen .team-hero-name strong {
+    font-size: 22px;
+  }
+
+  .team-builder-screen .team-hero-name span {
+    margin-top: 3px;
+    font-size: 10px;
+  }
+
+  .team-builder-screen .team-slot-card label {
+    gap: 6px;
+    margin-top: 10px;
+    font-size: 9px;
+  }
+
+  .team-builder-screen .team-slot-card select {
+    min-height: 44px;
+    padding: 10px 12px;
+    border-radius: 11px;
+    font-size: 12px;
+  }
+
+  .team-builder-screen .team-card-actions {
+    grid-template-columns: 44px 1fr 44px;
+    gap: 7px;
+    margin-top: 15px;
+  }
+
+  .team-builder-screen .team-card-actions button {
+    min-height: 40px;
+    padding: 9px 5px;
+    border-radius: 10px;
+    font-size: 9px;
+    font-weight: 800;
+  }
+
+  .team-builder-screen .empty-team-slot span {
+    width: 68px;
+    height: 68px;
+    margin-bottom: 12px;
+    font-size: 34px;
+  }
+
+  .team-builder-screen .empty-team-slot b {
+    font-size: 11px;
+  }
+
+  .team-builder-screen .empty-team-slot small {
+    margin-top: 6px;
+    font-size: 9px;
+  }
+
+  .team-builder-screen .available-heroes {
+    margin-top: 23px;
+    padding: 22px;
+    border-radius: 22px;
+  }
+
+  .team-builder-screen .available-heroes > div:first-child small {
+    font-size: 10px;
+  }
+
+  .team-builder-screen .available-row {
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .team-builder-screen .available-row button {
+    min-width: 230px;
+    grid-template-columns: 62px 1fr 30px;
+    gap: 11px;
+    padding: 10px;
+    border-radius: 15px;
+  }
+
+  .team-builder-screen .available-row .portrait-small {
+    width: 62px;
+    height: 68px;
+    border-width: 3px;
+  }
+
+  .team-builder-screen .available-row button strong {
+    font-size: 12px;
+  }
+
+  .team-builder-screen .available-row button small {
+    margin-top: 3px;
+    font-size: 9px;
+  }
+
+  .team-builder-screen .available-row button > b {
+    font-size: 25px;
+  }
+
+  .team-builder-screen .all-assigned,
+  .team-builder-screen .team-footer > span {
+    font-size: 12px;
+  }
+
+  .team-builder-screen .team-footer {
+    margin-top: 23px;
+  }
+
+  .team-builder-screen .team-footer button {
+    min-height: 56px;
+    padding: 15px 28px;
+    font-size: 11px;
+  }
+}
+
 @media (max-width: 1100px) {
   .hero-roster-grid {
     grid-template-columns: repeat(2, 1fr);

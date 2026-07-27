@@ -71,3 +71,13 @@ test("ships immersive dungeon animation layers with an accessible fallback", asy
   assert.doesNotMatch(css, /\.combat-result-banner\s*>\s*div\s*\{/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
 });
+
+test("gives the team builder a larger desktop-only layout", async () => {
+  const css = await readFile(new URL("../app/styles/collection.css", import.meta.url), "utf8");
+  const desktopTeam = css.indexOf("/* Team-Builder auf Desktop");
+
+  assert.ok(desktopTeam > 0);
+  assert.match(css.slice(desktopTeam), /@media \(min-width: 1181px\)/);
+  assert.match(css.slice(desktopTeam), /\.team-builder-screen \.team-slot-card \.portrait-medium/);
+  assert.match(css.slice(desktopTeam), /min-height:\s*500px/);
+});
