@@ -8,6 +8,26 @@ import { GameIcon, HeroPortrait } from "./shared";
 
 type RunActions = Omit<DungeonRunController, "run" | "startRun" | "endRun">;
 
+const ATMOSPHERE_PARTICLES = Array.from({ length: 12 }, (_, index) => index);
+
+function DungeonAtmosphere({ theme }: { theme: string }) {
+  return (
+    <div className={`dungeon-atmosphere atmosphere-${theme}`} aria-hidden="true">
+      <span className="atmosphere-vignette" />
+      <span className="atmosphere-haze haze-a" />
+      <span className="atmosphere-haze haze-b" />
+      <div className="atmosphere-particles">
+        {ATMOSPHERE_PARTICLES.map((index) => (
+          <i
+            key={index}
+            style={{ "--particle-index": index } as React.CSSProperties}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function RunTopbar({
   run,
   onRetreat,
@@ -272,6 +292,11 @@ function ContinuousDungeonPath({
         aria-label="Nebelkarte mit gelaufenem Weg und aktueller Abzweigung"
       >
         <div className="dungeon-sky" aria-hidden="true"><i /><i /><i /></div>
+        <div className="path-speed-lines" aria-hidden="true">
+          {ATMOSPHERE_PARTICLES.slice(0, 8).map((index) => (
+            <i key={index} style={{ "--particle-index": index } as React.CSSProperties} />
+          ))}
+        </div>
         <div className={`fog-local-route ${isWalking ? `walking-${chosenBranch === 0 ? "upper" : "lower"}` : ""}`}>
           <div className="traveled-road" aria-label="Bereits gelaufener Weg">
             <span className="traveled-line" />
@@ -540,9 +565,12 @@ function EnemyFigure({
 }) {
   const enemyEffects = effects.filter((effect) => effect.targetId === enemy.id);
   const attackEffect = effects.find((effect) => effect.sourceId === enemy.id);
+  const impactEffect = enemyEffects.find(
+    (effect) => effect.kind === "damage" || effect.kind === "ability",
+  );
   return (
     <button
-      className={`enemy-figure enemy-${enemy.kind} ${attackEffect ? "is-attacking" : ""} ${selected ? "selected" : ""} ${enemy.hp <= 0 ? "defeated" : ""}`}
+      className={`enemy-figure enemy-${enemy.kind} ${attackEffect ? "is-attacking" : ""} ${impactEffect ? "is-hit" : ""} ${selected ? "selected" : ""} ${enemy.hp <= 0 ? "defeated" : ""}`}
       onClick={onSelect}
       disabled={enemy.hp <= 0}
       aria-label={`${enemy.name} als Ziel auswählen`}
@@ -556,6 +584,7 @@ function EnemyFigure({
       <span className="enemy-eye eye-b" />
       <span className="enemy-weapon" />
       {attackEffect && <span className="enemy-attack-claw" key={attackEffect.id}><i /><i /><i /></span>}
+      {impactEffect && <span className="combat-impact-ring" key={`impact-${impactEffect.id}`} />}
       <strong>{enemy.name}</strong>
       <div className="battle-bar enemy-bar"><i style={{ width: `${(enemy.hp / enemy.maxHp) * 100}%` }} /></div>
       <small>{Math.ceil(enemy.hp)} / {enemy.maxHp}</small>
@@ -584,6 +613,11 @@ function BattleHeroFigure({
   const definition = getHero(heroId);
   if (!definition) return null;
   const heroEffects = effects.filter((effect) => effect.targetId === heroId);
+  const impactEffect = heroEffects.find(
+    (effect) => effect.kind === "damage" || effect.kind === "ability",
+  );
+  const healEffect = heroEffects.find((effect) => effect.kind === "heal");
+  const shieldEffect = heroEffects.find((effect) => effect.kind === "shield");
   const attackEffect = effects.find(
     (effect) =>
       effect.sourceId === heroId &&
@@ -597,7 +631,7 @@ function BattleHeroFigure({
         ? "arrow"
         : "fireball";
   return (
-    <div className={`battle-hero-figure battle-position-${position.toLowerCase()} ${attackEffect ? `is-attacking attack-${attackStyle}` : ""} ${hp <= 0 ? "defeated" : ""} ${sheltered ? "sheltered" : ""}`}>
+    <div className={`battle-hero-figure battle-position-${position.toLowerCase()} ${attackEffect ? `is-attacking attack-${attackStyle}` : ""} ${impactEffect ? "is-hit" : ""} ${healEffect ? "is-healed" : ""} ${shieldEffect ? "is-shielded" : ""} ${hp <= 0 ? "defeated" : ""} ${sheltered ? "sheltered" : ""}`}>
       <HeroPortrait hero={definition} size="medium" muted={hp <= 0} />
       <span className={`held-weapon held-weapon-${attackStyle}`} aria-hidden="true" />
       {attackEffect && (
@@ -605,6 +639,9 @@ function BattleHeroFigure({
           <i /><b />
         </span>
       )}
+      {impactEffect && <span className="combat-impact-ring" key={`impact-${impactEffect.id}`} />}
+      {healEffect && <span className="combat-heal-burst" key={`heal-${healEffect.id}`}><i /><i /><i /></span>}
+      {shieldEffect && <span className="combat-shield-burst" key={`shield-${shieldEffect.id}`} />}
       <strong>{definition.name}</strong>
       <div className="battle-bar"><i style={{ width: `${Math.max(0, (hp / maxHp) * 100)}%` }} /></div>
       {shield > 0 && <span className="figure-shield">{Math.ceil(shield)}</span>}
@@ -655,6 +692,11 @@ function CombatView({
         <span className="battle-canopy canopy-left" />
         <span className="battle-canopy canopy-right" />
         <span className="battle-ground" />
+        <div className={`battle-weather ${frost ? "battle-snow" : "battle-fireflies"}`} aria-hidden="true">
+          {ATMOSPHERE_PARTICLES.map((index) => (
+            <i key={index} style={{ "--particle-index": index } as React.CSSProperties} />
+          ))}
+        </div>
         <div className="hero-formation" aria-label="Dein Team">
           {combat.heroes.map((hero) => (
             <BattleHeroFigure
@@ -773,7 +815,12 @@ function CombatView({
       </div>
 
       {combat.outcome && (
-        <div className="combat-result-banner">
+        <div className={`combat-result-banner result-${combat.outcome}`}>
+          {combat.outcome === "victory" && (
+            <div className="combat-victory-sparks" aria-hidden="true">
+              {ATMOSPHERE_PARTICLES.slice(0, 8).map((index) => <i key={index} />)}
+            </div>
+          )}
           <div>
             <span>{combat.outcome === "victory" ? "RAUM GESICHERT" : "TEAM BESIEGT"}</span>
             <h2>{combat.outcome === "victory" ? "Der Weg ist frei!" : frost ? "Der Frost war stärker." : "Der Wald war stärker."}</h2>
@@ -799,6 +846,11 @@ function RewardView({ run, onClaim }: { run: DungeonRun; onClaim: (rewards: RunR
 
   return (
     <section className="run-reward-view">
+      <div className="reward-celebration" aria-hidden="true">
+        {ATMOSPHERE_PARTICLES.map((index) => (
+          <i key={index} style={{ "--particle-index": index } as React.CSSProperties} />
+        ))}
+      </div>
       <div className="victory-emblem"><span>{frost ? "S" : "N"}</span><i /><b>✦</b></div>
       <span className="chapter-kicker">{frost ? "FROSTGLAS-HÖHLEN ABGESCHLOSSEN" : "FLÜSTERWALD ABGESCHLOSSEN"}</span>
       <h1>{frost ? "Der Frostthron zerbricht" : "Der Wald atmet wieder"}</h1>
@@ -855,7 +907,8 @@ export function DungeonRunView({
 }) {
   const theme = getDungeon(run.dungeonId)?.theme ?? "forest";
   return (
-    <main className={`dungeon-run-screen dungeon-theme-${theme}`}>
+    <main className={`dungeon-run-screen dungeon-theme-${theme} phase-${run.phase}`}>
+      <DungeonAtmosphere theme={theme} />
       <RunTopbar run={run} onRetreat={onRetreat} actions={actions} />
       {(run.phase === "path" || run.phase === "travel") && (
         <ContinuousDungeonPath run={run} progress={progress} actions={actions} />

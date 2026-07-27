@@ -53,3 +53,16 @@ test("keeps responsive overrides in deliberate cascade order", async () => {
   assert.ok(touchLandscape < tabletLandscape);
   assert.match(css.slice(touchLandscape), /any-pointer:\s*coarse/);
 });
+
+test("ships immersive dungeon animation layers with an accessible fallback", async () => {
+  const component = await readFile(new URL("../app/components/DungeonRun.tsx", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/styles/dungeon.css", import.meta.url), "utf8");
+
+  assert.match(component, /DungeonAtmosphere/);
+  assert.match(component, /battle-weather/);
+  assert.match(component, /combat-impact-ring/);
+  assert.match(component, /reward-celebration/);
+  assert.match(css, /\.atmosphere-forest/);
+  assert.match(css, /\.atmosphere-frost/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
+});
