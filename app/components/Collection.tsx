@@ -63,7 +63,7 @@ export function HeroesCollection({
                 style={{ "--hero-accent": hero.palette } as React.CSSProperties}
               >
                 <RarityBadge rarity={hero.rarity} />
-                <HeroPortrait hero={hero} size="medium" muted={!playerHero} />
+                <HeroPortrait hero={hero} size="medium" skinId={playerHero ? progress.equippedCosmetics.skins[hero.id] : null} muted={!playerHero} />
                 <strong>{playerHero ? hero.name : "Unentdeckt"}</strong>
                 <small>{playerHero ? `Lv. ${playerHero.level} · ${hero.role}` : hero.rarity}</small>
                 {playerHero && <span className="star-line">{"★".repeat(playerHero.stars)}{"☆".repeat(5 - playerHero.stars)}</span>}
@@ -75,7 +75,7 @@ export function HeroesCollection({
         {owned && definition && stats && (
           <article className="hero-detail-card" style={{ "--hero-accent": definition.palette } as React.CSSProperties}>
             <div className="hero-detail-banner">
-              <HeroPortrait hero={definition} size="large" />
+              <HeroPortrait hero={definition} size="large" skinId={progress.equippedCosmetics.skins[definition.id]} />
               <div>
                 <RarityBadge rarity={definition.rarity} />
                 <h2>{definition.name}</h2>
@@ -194,7 +194,7 @@ export function GearInventory({
                     key={hero.id}
                     onClick={() => actions.equipGear(selected.uid, hero.id)}
                   >
-                    <HeroPortrait hero={hero} size="small" />
+                    <HeroPortrait hero={hero} size="small" skinId={progress.equippedCosmetics.skins[hero.id]} />
                     <span>{hero.name}<small>{selected.equippedBy === hero.id ? "Ausgerüstet" : hero.role}</small></span>
                   </button>
                 ) : null;
@@ -261,7 +261,7 @@ export function TeamBuilder({
                 style={{ "--hero-accent": hero.palette } as React.CSSProperties}
               >
                 <div className="team-order">{index + 1}</div>
-                <HeroPortrait hero={hero} size="medium" />
+                <HeroPortrait hero={hero} size="medium" skinId={progress.equippedCosmetics.skins[hero.id]} />
                 <div className="team-hero-name"><strong>{hero.name}</strong><span>{hero.role}</span></div>
                 <label>POSITION
                   <select value={slot.position} onChange={(event) => actions.updateTeamSlot(slot.heroId, { position: event.target.value as TeamPosition })}>
@@ -299,7 +299,7 @@ export function TeamBuilder({
             const hero = getHero(owned.id);
             return hero ? (
               <button disabled={progress.team.length >= 4} key={hero.id} onClick={() => actions.addHeroToTeam(hero.id)}>
-                <HeroPortrait hero={hero} size="small" />
+                <HeroPortrait hero={hero} size="small" skinId={progress.equippedCosmetics.skins[hero.id]} />
                 <span><strong>{hero.name}</strong><small>{hero.role}</small></span>
                 <b>+</b>
               </button>

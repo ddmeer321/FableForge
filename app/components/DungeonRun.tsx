@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { getDungeon, getHero } from "../game/data";
+import { getCosmetic, getDungeon, getHero } from "../game/data";
 import type { DungeonRun, PlayerProgress, RunRewards } from "../game/types";
 import type { DungeonRunController } from "../game/use-dungeon-run";
 import { GameIcon, HeroPortrait } from "./shared";
@@ -9,6 +9,22 @@ import { GameIcon, HeroPortrait } from "./shared";
 type RunActions = Omit<DungeonRunController, "run" | "startRun" | "endRun">;
 
 const ATMOSPHERE_PARTICLES = Array.from({ length: 12 }, (_, index) => index);
+const COSMETIC_PARTICLES = Array.from({ length: 6 }, (_, index) => index);
+
+function cosmeticEffectStyle(progress: PlayerProgress) {
+  const aura = getCosmetic(progress.equippedCosmetics.aura);
+  const trail = getCosmetic(progress.equippedCosmetics.trail);
+  return {
+    aura,
+    trail,
+    style: {
+      "--party-aura": aura?.colors[0] ?? "#8be0b1",
+      "--party-aura-soft": aura?.colors[1] ?? "#ecffae",
+      "--party-trail": trail?.colors[0] ?? "#f2d265",
+      "--party-trail-soft": trail?.colors[1] ?? "#fff1a5",
+    } as React.CSSProperties,
+  };
+}
 
 function DungeonAtmosphere({ theme }: { theme: string }) {
   return (
@@ -105,7 +121,7 @@ function PathChoiceView({
             const hero = getHero(slot.heroId);
             return hero ? (
               <span style={{ "--party-index": index } as React.CSSProperties} key={slot.heroId}>
-                <HeroPortrait hero={hero} size="small" />
+                <HeroPortrait hero={hero} size="small" skinId={progress.equippedCosmetics.skins[hero.id]} />
                 <small>{hero.name}</small>
               </span>
             ) : null;
@@ -180,7 +196,7 @@ function TravelView({
             const hero = getHero(slot.heroId);
             return hero ? (
               <span style={{ "--walker-index": index } as React.CSSProperties} key={slot.heroId}>
-                <HeroPortrait hero={hero} size="small" />
+                <HeroPortrait hero={hero} size="small" skinId={progress.equippedCosmetics.skins[hero.id]} />
               </span>
             ) : null;
           })}
@@ -221,6 +237,7 @@ function ContinuousDungeonPath({
     .slice(-3);
   const frost = run.dungeonId === "frostglass-cavern";
   const dungeon = getDungeon(run.dungeonId);
+  const cosmeticEffects = cosmeticEffectStyle(progress);
 
   useEffect(() => {
     if (!isWalking || !run.currentRoom) return;
@@ -338,12 +355,20 @@ function ContinuousDungeonPath({
             );
           })}
 
-          <div className="fog-party" aria-label="Deine Gruppe an der Abzweigung">
+          <div
+            className={`fog-party ${cosmeticEffects.aura ? "has-party-aura" : ""} ${cosmeticEffects.trail ? "has-party-trail" : ""}`}
+            style={cosmeticEffects.style}
+            aria-label="Deine Gruppe an der Abzweigung"
+          >
+            <div className="party-aura-effect" aria-hidden="true"><i /><i /></div>
+            <div className="party-trail-effect" aria-hidden="true">
+              {COSMETIC_PARTICLES.map((particle) => <i key={particle} />)}
+            </div>
             {progress.team.map((slot, index) => {
               const hero = getHero(slot.heroId);
               return hero ? (
                 <span style={{ "--walker-index": index } as React.CSSProperties} key={`fog-${slot.heroId}`}>
-                  <HeroPortrait hero={hero} size="small" />
+                  <HeroPortrait hero={hero} size="small" skinId={progress.equippedCosmetics.skins[hero.id]} />
                   <small>{hero.name}</small>
                 </span>
               ) : null;
@@ -409,15 +434,22 @@ function ContinuousDungeonPath({
         </div>
 
         <div
-          className={`map-party ${isWalking ? `walking-to-${chosenBranch === 0 ? "upper" : "lower"}` : ""}`}
-          style={{ "--party-x": `${4 + run.stage * 18.4}%` } as React.CSSProperties}
+          className={`map-party ${isWalking ? `walking-to-${chosenBranch === 0 ? "upper" : "lower"}` : ""} ${cosmeticEffects.aura ? "has-party-aura" : ""} ${cosmeticEffects.trail ? "has-party-trail" : ""}`}
+          style={{
+            "--party-x": `${4 + run.stage * 18.4}%`,
+            ...cosmeticEffects.style,
+          } as React.CSSProperties}
           aria-label="Deine Gruppe auf dem Dungeonpfad"
         >
+          <div className="party-aura-effect" aria-hidden="true"><i /><i /></div>
+          <div className="party-trail-effect" aria-hidden="true">
+            {COSMETIC_PARTICLES.map((particle) => <i key={particle} />)}
+          </div>
           {progress.team.map((slot, index) => {
             const hero = getHero(slot.heroId);
             return hero ? (
               <span style={{ "--walker-index": index } as React.CSSProperties} key={slot.heroId}>
-                <HeroPortrait hero={hero} size="small" />
+                <HeroPortrait hero={hero} size="small" skinId={progress.equippedCosmetics.skins[hero.id]} />
                 <small>{hero.name}</small>
               </span>
             ) : null;
@@ -654,6 +686,8 @@ function BattleHeroFigure({
   shield,
   effects,
   sheltered,
+  skinId,
+  auraColors,
 }: {
   heroId: string;
   hp: number;
@@ -662,6 +696,8 @@ function BattleHeroFigure({
   shield: number;
   effects: NonNullable<DungeonRun["combat"]>["effects"];
   sheltered: boolean;
+  skinId?: string;
+  auraColors?: [string, string];
 }) {
   const definition = getHero(heroId);
   if (!definition) return null;
@@ -684,8 +720,15 @@ function BattleHeroFigure({
         ? "arrow"
         : "fireball";
   return (
-    <div className={`battle-hero-figure battle-position-${position.toLowerCase()} ${attackEffect ? `is-attacking attack-${attackStyle}` : ""} ${impactEffect ? "is-hit" : ""} ${healEffect ? "is-healed" : ""} ${shieldEffect ? "is-shielded" : ""} ${hp <= 0 ? "defeated" : ""} ${sheltered ? "sheltered" : ""}`}>
-      <HeroPortrait hero={definition} size="medium" muted={hp <= 0} />
+    <div
+      className={`battle-hero-figure battle-position-${position.toLowerCase()} ${auraColors ? "has-battle-aura" : ""} ${attackEffect ? `is-attacking attack-${attackStyle}` : ""} ${impactEffect ? "is-hit" : ""} ${healEffect ? "is-healed" : ""} ${shieldEffect ? "is-shielded" : ""} ${hp <= 0 ? "defeated" : ""} ${sheltered ? "sheltered" : ""}`}
+      style={auraColors ? {
+        "--party-aura": auraColors[0],
+        "--party-aura-soft": auraColors[1],
+      } as React.CSSProperties : undefined}
+    >
+      <span className="battle-cosmetic-aura" aria-hidden="true" />
+      <HeroPortrait hero={definition} size="medium" skinId={skinId} muted={hp <= 0} />
       <span className={`held-weapon held-weapon-${attackStyle}`} aria-hidden="true" />
       {attackEffect && (
         <span className={`hero-attack-projectile projectile-${attackStyle}`} key={attackEffect.id} aria-hidden="true">
@@ -705,9 +748,11 @@ function BattleHeroFigure({
 
 function CombatView({
   run,
+  progress,
   actions,
 }: {
   run: DungeonRun;
+  progress: PlayerProgress;
   actions: RunActions;
 }) {
   const combat = run.combat;
@@ -719,9 +764,13 @@ function CombatView({
   const lowHealth = combat.heroes.some((hero) => hero.hp > 0 && hero.hp / hero.maxHp < 0.28);
   const frost = run.dungeonId === "frostglass-cavern";
   const frostSeconds = Math.max(0, Math.ceil((combat.environmentNextAt - combat.lastTick) / 1000));
+  const cosmeticEffects = cosmeticEffectStyle(progress);
 
   return (
-    <section className={`combat-view ${boss ? "has-boss" : ""} ${combat.paused ? "paused" : ""} ${lowHealth ? "low-health-warning" : ""}`}>
+    <section
+      className={`combat-view ${boss ? "has-boss" : ""} ${cosmeticEffects.trail ? "has-combat-trail" : ""} ${combat.paused ? "paused" : ""} ${lowHealth ? "low-health-warning" : ""}`}
+      style={cosmeticEffects.style}
+    >
       {boss && (
         <div className="boss-health-banner">
           <span>BOSS · {livingEnemies} GEGNER VERBLEIBEND</span>
@@ -757,6 +806,8 @@ function CombatView({
               {...hero}
               sheltered={combat.shelterHeroId === hero.heroId}
               effects={combat.effects}
+              skinId={progress.equippedCosmetics.skins[hero.heroId]}
+              auraColors={cosmeticEffects.aura?.colors}
             />
           ))}
         </div>
@@ -791,7 +842,7 @@ function CombatView({
                 style={{ "--hero-accent": definition.palette } as React.CSSProperties}
               >
                 <div className="command-hero">
-                  <HeroPortrait hero={definition} size="small" muted={hero.hp <= 0} />
+                  <HeroPortrait hero={definition} size="small" skinId={progress.equippedCosmetics.skins[hero.heroId]} muted={hero.hp <= 0} />
                   <div><strong>{definition.name}</strong><span>{definition.role} · {hero.position}</span></div>
                   <button onClick={() => actions.changePosition(hero.heroId)} disabled={hero.hp <= 0}>↻</button>
                 </div>
@@ -835,7 +886,7 @@ function CombatView({
               const definition = getHero(sheltered.heroId);
               return definition ? (
                 <>
-                  <HeroPortrait hero={definition} size="medium" />
+                  <HeroPortrait hero={definition} size="medium" skinId={progress.equippedCosmetics.skins[sheltered.heroId]} />
                   <strong>{definition.name}</strong>
                   <div className="battle-bar"><i style={{ width: `${(sheltered.hp / sheltered.maxHp) * 100}%` }} /></div>
                   <small>{Math.ceil(sheltered.hp)} / {sheltered.maxHp} LP · max. 78 % passiv</small>
@@ -969,7 +1020,7 @@ export function DungeonRunView({
       {run.phase === "event" && <EventView run={run} actions={actions} />}
       {run.phase === "powerup" && <PowerupView run={run} actions={actions} />}
       {run.phase === "bossIntro" && <BossIntro run={run} actions={actions} />}
-      {run.phase === "combat" && <CombatView run={run} actions={actions} />}
+      {run.phase === "combat" && <CombatView run={run} progress={progress} actions={actions} />}
       {run.phase === "reward" && <RewardView run={run} onClaim={onClaimRewards} />}
       {run.phase === "defeat" && <DefeatView run={run} onRetreat={onRetreat} />}
     </main>

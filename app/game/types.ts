@@ -71,6 +71,23 @@ export type BoxDefinition = {
   contents: string[];
 };
 
+export type CosmeticKind = "skin" | "aura" | "trail";
+
+export type CosmeticDefinition = {
+  id: string;
+  name: string;
+  kind: CosmeticKind;
+  rarity: Rarity;
+  description: string;
+  colors: [string, string];
+};
+
+export type CosmeticLoadout = {
+  skins: Record<string, string>;
+  aura: string | null;
+  trail: string | null;
+};
+
 export type DungeonDefinition = {
   id: string;
   name: string;
@@ -122,6 +139,7 @@ export type PlayerProgress = {
   heroes: PlayerHero[];
   gear: OwnedGear[];
   cosmetics: string[];
+  equippedCosmetics: CosmeticLoadout;
   team: TeamSlot[];
   pity: Record<string, number>;
   unlockedDungeons: string[];
@@ -143,6 +161,7 @@ export type AppScreen =
   | "boxes"
   | "heroes"
   | "gear"
+  | "cosmetics"
   | "team"
   | "dungeons"
   | "run";

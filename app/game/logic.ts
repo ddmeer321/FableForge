@@ -5,6 +5,7 @@ import {
   HEROES,
   RARITY_ORDER,
   RUN_BUFFS,
+  getCosmetic,
   getGear,
   getHero,
 } from "./data";
@@ -38,12 +39,58 @@ export function createInitialProgress(): PlayerProgress {
     heroes: [],
     gear: [],
     cosmetics: [],
+    equippedCosmetics: { skins: {}, aura: null, trail: null },
     team: [],
     pity: Object.fromEntries(BOXES.map((box) => [box.id, 0])),
     unlockedDungeons: ["whispering-woods"],
     completedRuns: 0,
     lastUnlockedDungeon: "Flüsterwald",
     audioEnabled: true,
+  };
+}
+
+export function normalizeProgress(value: unknown): PlayerProgress | null {
+  if (!value || typeof value !== "object") return null;
+  const candidate = value as Partial<PlayerProgress>;
+  if (
+    candidate.version !== 2 ||
+    !Array.isArray(candidate.heroes) ||
+    !Array.isArray(candidate.gear) ||
+    !Array.isArray(candidate.team) ||
+    !candidate.wallet
+  ) {
+    return null;
+  }
+
+  const initial = createInitialProgress();
+  const cosmetics = (Array.isArray(candidate.cosmetics) ? candidate.cosmetics : []).filter(
+    (id): id is string => typeof id === "string" && Boolean(getCosmetic(id)),
+  );
+  const owned = new Set(cosmetics);
+  const heroIds = new Set(candidate.heroes.map((hero) => hero.id));
+  const rawLoadout = candidate.equippedCosmetics;
+  const skins = Object.fromEntries(
+    Object.entries(rawLoadout?.skins ?? {}).filter(([heroId, cosmeticId]) => {
+      const cosmetic = getCosmetic(cosmeticId);
+      return heroIds.has(heroId) && owned.has(cosmeticId) && cosmetic?.kind === "skin";
+    }),
+  );
+  const aura =
+    rawLoadout?.aura && owned.has(rawLoadout.aura) && getCosmetic(rawLoadout.aura)?.kind === "aura"
+      ? rawLoadout.aura
+      : null;
+  const trail =
+    rawLoadout?.trail && owned.has(rawLoadout.trail) && getCosmetic(rawLoadout.trail)?.kind === "trail"
+      ? rawLoadout.trail
+      : null;
+
+  return {
+    ...initial,
+    ...candidate,
+    version: 2,
+    cosmetics,
+    equippedCosmetics: { skins, aura, trail },
+    pity: { ...initial.pity, ...(candidate.pity ?? {}) },
   };
 }
 

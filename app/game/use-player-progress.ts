@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getBox, getGear } from "./data";
+import { getBox, getCosmetic, getGear } from "./data";
 import {
   createInitialProgress,
+  normalizeProgress,
   rollBox,
   starterGearResult,
   starterHeroResult,
@@ -22,18 +23,6 @@ const SAVE_KEY = "riftbound-beta-progress-v2";
 function uid() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
   return `gear-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
-
-function validProgress(value: unknown): value is PlayerProgress {
-  if (!value || typeof value !== "object") return false;
-  const candidate = value as Partial<PlayerProgress>;
-  return (
-    candidate.version === 2 &&
-    Array.isArray(candidate.heroes) &&
-    Array.isArray(candidate.gear) &&
-    Array.isArray(candidate.team) &&
-    Boolean(candidate.wallet)
-  );
 }
 
 function addHero(progress: PlayerProgress, heroId: string, fragments = 0) {
@@ -57,9 +46,10 @@ export function usePlayerProgress() {
         const raw = window.localStorage.getItem(SAVE_KEY);
         if (raw) {
           const parsed: unknown = JSON.parse(raw);
-          if (validProgress(parsed)) {
-            setProgress(parsed);
-            progressRef.current = parsed;
+          const normalized = normalizeProgress(parsed);
+          if (normalized) {
+            setProgress(normalized);
+            progressRef.current = normalized;
           }
         }
       } catch {
@@ -236,6 +226,49 @@ export function usePlayerProgress() {
     }));
   }, []);
 
+  const equipCosmetic = useCallback((cosmeticId: string, heroId?: string) => {
+    setProgress((current) => {
+      const cosmetic = getCosmetic(cosmeticId);
+      if (!cosmetic || !current.cosmetics.includes(cosmeticId)) return current;
+      if (cosmetic.kind === "skin") {
+        if (!heroId || !current.heroes.some((hero) => hero.id === heroId)) return current;
+        return {
+          ...current,
+          equippedCosmetics: {
+            ...current.equippedCosmetics,
+            skins: { ...current.equippedCosmetics.skins, [heroId]: cosmeticId },
+          },
+        };
+      }
+      return {
+        ...current,
+        equippedCosmetics: {
+          ...current.equippedCosmetics,
+          [cosmetic.kind]: cosmeticId,
+        },
+      };
+    });
+  }, []);
+
+  const unequipCosmetic = useCallback((kind: "skin" | "aura" | "trail", heroId?: string) => {
+    setProgress((current) => {
+      if (kind === "skin") {
+        if (!heroId || !current.equippedCosmetics.skins[heroId]) return current;
+        const skins = { ...current.equippedCosmetics.skins };
+        delete skins[heroId];
+        return {
+          ...current,
+          equippedCosmetics: { ...current.equippedCosmetics, skins },
+        };
+      }
+      if (!current.equippedCosmetics[kind]) return current;
+      return {
+        ...current,
+        equippedCosmetics: { ...current.equippedCosmetics, [kind]: null },
+      };
+    });
+  }, []);
+
   const levelHero = useCallback((heroId: string) => {
     setProgress((current) => {
       const hero = current.heroes.find((entry) => entry.id === heroId);
@@ -330,6 +363,8 @@ export function usePlayerProgress() {
     updateTeamSlot,
     equipGear,
     unequipGear,
+    equipCosmetic,
+    unequipCosmetic,
     levelHero,
     starHero,
     claimRunRewards,

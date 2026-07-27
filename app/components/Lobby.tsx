@@ -77,7 +77,7 @@ export function Lobby({
           {teamHeroes.length ? (
             teamHeroes.map((hero, index) => (
               <div className={`lobby-character lobby-character-${index + 1}`} key={hero.id}>
-                <HeroPortrait hero={hero} size="large" />
+                <HeroPortrait hero={hero} size="large" skinId={progress.equippedCosmetics.skins[hero.id]} />
                 <span>{hero.name}</span>
               </div>
             ))
@@ -109,7 +109,7 @@ export function Lobby({
           <div className="card-portrait-row">
             {progress.heroes.slice(0, 3).map((owned, index) => {
               const hero = getHero(owned.id);
-              return hero ? <HeroPortrait hero={hero} size="medium" key={hero.id} muted={index > 1} /> : null;
+              return hero ? <HeroPortrait hero={hero} size="medium" skinId={progress.equippedCosmetics.skins[hero.id]} key={hero.id} muted={index > 1} /> : null;
             })}
           </div>
           <span className="card-label">DEINE GEFÄHRTEN</span>
@@ -143,6 +143,18 @@ export function Lobby({
           <h2>Team</h2>
           <p>{teamHeroes.length}/4 Helden · Stärke {teamPower(progress)}</p>
           <b>TEAM VORBEREITEN →</b>
+        </button>
+
+        <button className="lobby-card cosmetic-card-lobby" onClick={() => onNavigate("cosmetics")} disabled={!ready}>
+          <div className="lobby-cosmetic-display" aria-hidden="true">
+            <span className="lobby-cosmetic-aura"><i /><i /></span>
+            <span className="lobby-cosmetic-cloak" />
+            <span className="lobby-cosmetic-trail"><i /><i /><i /></span>
+          </div>
+          <span className="card-label">ATELIER</span>
+          <h2>Kosmetik</h2>
+          <p>{progress.cosmetics.length} Looks · Skins, Auren und Spuren</p>
+          <b>LOOKS AUSRÜSTEN →</b>
         </button>
       </section>
 

@@ -84,3 +84,17 @@ test("gives the team builder a larger desktop-only layout", async () => {
   assert.match(css.slice(desktopTeam), /\.team-builder-screen \.team-slot-card \.portrait-medium/);
   assert.match(css.slice(desktopTeam), /min-height:\s*500px/);
 });
+
+test("ships an equipable cosmetics wardrobe instead of title or emote placeholders", async () => {
+  const app = await readFile(new URL("../app/components/GameApp.tsx", import.meta.url), "utf8");
+  const wardrobe = await readFile(new URL("../app/components/Cosmetics.tsx", import.meta.url), "utf8");
+  const dungeon = await readFile(new URL("../app/components/DungeonRun.tsx", import.meta.url), "utf8");
+
+  assert.match(app, /screen === "cosmetics"/);
+  assert.match(wardrobe, /Skins, Team-Auren und sichtbaren Spuren/);
+  assert.match(wardrobe, /equipCosmetic/);
+  assert.match(wardrobe, /unequipCosmetic/);
+  assert.doesNotMatch(wardrobe, /Titel|Emote/);
+  assert.match(dungeon, /party-aura-effect/);
+  assert.match(dungeon, /party-trail-effect/);
+});

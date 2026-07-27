@@ -1,5 +1,6 @@
 import type {
   BoxDefinition,
+  CosmeticDefinition,
   DungeonDefinition,
   GearDefinition,
   HeroDefinition,
@@ -228,12 +229,22 @@ export const GEAR: GearDefinition[] = [
   },
 ];
 
-export const COSMETICS = [
-  { id: "trail-fireflies", name: "Glühwürmchen-Spur", rarity: "Rare" as Rarity },
-  { id: "title-pathfinder", name: "Titel: Pfadfinder", rarity: "Uncommon" as Rarity },
-  { id: "emote-campfire", name: "Emote: Lagerfeuer", rarity: "Common" as Rarity },
-  { id: "skin-moonlit", name: "Skin: Mondlicht", rarity: "Epic" as Rarity },
-  { id: "aura-secret-grove", name: "Aura: Geheimer Hain", rarity: "Secret" as Rarity },
+export const COSMETICS: CosmeticDefinition[] = [
+  { id: "skin-verdant", name: "Waldläufer-Gewand", kind: "skin", rarity: "Uncommon", description: "Moosgrüne Stoffe und lebendige Blattakzente.", colors: ["#62bc82", "#d7f29b"] },
+  { id: "skin-frostglass", name: "Frostglas-Rüstung", kind: "skin", rarity: "Rare", description: "Klares Eisblau mit schimmernden Kristallkanten.", colors: ["#7fd9ee", "#d9fbff"] },
+  { id: "skin-emberguard", name: "Glutwächter", kind: "skin", rarity: "Rare", description: "Warme Kupfertöne, die wie eine Esse glimmen.", colors: ["#e8754e", "#ffd173"] },
+  { id: "skin-moonlit", name: "Mondlicht", kind: "skin", rarity: "Epic", description: "Silberviolette Kleidung im Licht einer jungen Mondsichel.", colors: ["#9287e9", "#f1e9ff"] },
+  { id: "skin-starlight", name: "Sternenschmied", kind: "skin", rarity: "Legendary", description: "Ein Gewand aus Mitternachtsblau und geschmiedetem Sternengold.", colors: ["#5964cf", "#ffd875"] },
+  { id: "aura-spark", name: "Funkenkreis", kind: "aura", rarity: "Common", description: "Kleine Lichtfunken tanzen um das aktive Team.", colors: ["#f6d885", "#fff4bd"] },
+  { id: "aura-sunward", name: "Sonnenwacht", kind: "aura", rarity: "Rare", description: "Ein ruhiger goldener Ring umgibt die Formation.", colors: ["#f2b94e", "#fff0a4"] },
+  { id: "aura-frost-halo", name: "Frosthalo", kind: "aura", rarity: "Epic", description: "Feine Eiskristalle ziehen leuchtende Kreise.", colors: ["#76d7ef", "#dcfbff"] },
+  { id: "aura-void-bloom", name: "Leerenblüte", kind: "aura", rarity: "Legendary", description: "Violette Blüten aus einer anderen Wirklichkeit.", colors: ["#a465e8", "#ff8bc7"] },
+  { id: "aura-secret-grove", name: "Geheimer Hain", kind: "aura", rarity: "Secret", description: "Uralte Waldlichter erwachen bei jedem Schritt.", colors: ["#52e5a3", "#eaff86"] },
+  { id: "trail-leaves", name: "Blätterpfad", kind: "trail", rarity: "Common", description: "Kleine Blätter wirbeln hinter der Gruppe her.", colors: ["#6fba68", "#d3e97b"] },
+  { id: "trail-snowdust", name: "Schneestaub", kind: "trail", rarity: "Uncommon", description: "Pulverschnee glitzert kurz auf dem zurückgelegten Weg.", colors: ["#a8e8f5", "#ffffff"] },
+  { id: "trail-fireflies", name: "Glühwürmchen-Spur", kind: "trail", rarity: "Rare", description: "Goldene Glühwürmchen folgen deiner Reise.", colors: ["#f7d95d", "#baf27f"] },
+  { id: "trail-embers", name: "Glutfunken", kind: "trail", rarity: "Epic", description: "Sanfte Funken verlöschen hinter den Helden.", colors: ["#f06b42", "#ffc45d"] },
+  { id: "trail-stardust", name: "Sternenstaub", kind: "trail", rarity: "Legendary", description: "Ein Schweif aus violettem Sternenlicht.", colors: ["#9679ef", "#ffd7fa"] },
 ];
 
 export const BOXES: BoxDefinition[] = [
@@ -273,7 +284,7 @@ export const BOXES: BoxDefinition[] = [
     pityMax: 12,
     accent: "#b78bef",
     availability: "Immer verfügbar",
-    chances: { Common: 35, Uncommon: 30, Rare: 22, Epic: 11, Secret: 2 },
+    chances: { Common: 28, Uncommon: 25, Rare: 24, Epic: 15, Legendary: 6, Secret: 2 },
     contents: COSMETICS.map((cosmetic) => cosmetic.id),
   },
   {
@@ -287,7 +298,7 @@ export const BOXES: BoxDefinition[] = [
     accent: "#ef7ca7",
     availability: "Blütenfest · 12 Tage",
     chances: { Uncommon: 35, Rare: 35, Epic: 22, Legendary: 7, Secret: 1 },
-    contents: ["trail-fireflies", "skin-moonlit", "aura-secret-grove"],
+    contents: ["trail-fireflies", "trail-leaves", "skin-verdant", "skin-moonlit", "aura-secret-grove"],
   },
   {
     id: "boss-box",
@@ -384,6 +395,10 @@ export function getHero(id: string) {
 
 export function getGear(id: string) {
   return GEAR.find((gear) => gear.id === id);
+}
+
+export function getCosmetic(id: string | null | undefined) {
+  return id ? COSMETICS.find((cosmetic) => cosmetic.id === id) : undefined;
 }
 
 export function getBox(id: string) {

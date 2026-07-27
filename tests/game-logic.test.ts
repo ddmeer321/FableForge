@@ -1,13 +1,36 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { COSMETICS } from "../app/game/data";
 import {
   activateHeroAbility,
   beginRoomTravel,
   createCombat,
   createInitialProgress,
   createRun,
+  normalizeProgress,
   tickCombat,
 } from "../app/game/logic";
+
+test("the cosmetics catalog contains only equipable skins, auras and trails", () => {
+  assert.ok(COSMETICS.length >= 12);
+  assert.deepEqual(
+    [...new Set(COSMETICS.map((cosmetic) => cosmetic.kind))].sort(),
+    ["aura", "skin", "trail"],
+  );
+  assert.ok(COSMETICS.every((cosmetic) => !/Titel|Emote/i.test(cosmetic.name)));
+});
+
+test("old saves gain a safe cosmetic loadout and discard retired cosmetics", () => {
+  const oldSave = structuredClone(createInitialProgress()) as Partial<ReturnType<typeof createInitialProgress>>;
+  delete oldSave.equippedCosmetics;
+  oldSave.cosmetics = ["title-pathfinder", "emote-campfire", "skin-moonlit", "trail-fireflies"];
+
+  const normalized = normalizeProgress(oldSave);
+
+  assert.ok(normalized);
+  assert.deepEqual(normalized.cosmetics, ["skin-moonlit", "trail-fireflies"]);
+  assert.deepEqual(normalized.equippedCosmetics, { skins: {}, aura: null, trail: null });
+});
 
 function starterProgress() {
   const progress = createInitialProgress();

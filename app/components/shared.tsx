@@ -1,22 +1,29 @@
 "use client";
 
-import { CURRENCY_LABELS, getHero } from "../game/data";
+import { CURRENCY_LABELS, getCosmetic, getHero } from "../game/data";
 import type { AppScreen, CurrencyWallet, HeroDefinition, Rarity } from "../game/types";
 
 export function HeroPortrait({
   hero,
   size = "medium",
   muted = false,
+  skinId = null,
 }: {
   hero: HeroDefinition;
   size?: "small" | "medium" | "large";
   muted?: boolean;
+  skinId?: string | null;
 }) {
+  const skin = getCosmetic(skinId);
+  const hasSkin = skin?.kind === "skin";
   return (
     <div
-      className={`adventure-portrait portrait-${hero.portrait} portrait-${size} ${muted ? "is-muted" : ""}`}
-      style={{ "--portrait-accent": hero.palette } as React.CSSProperties}
-      aria-label={`${hero.name}, ${hero.role}`}
+      className={`adventure-portrait portrait-${hero.portrait} portrait-${size} ${hasSkin ? "has-cosmetic-skin" : ""} ${muted ? "is-muted" : ""}`}
+      style={{
+        "--portrait-accent": hasSkin ? skin.colors[0] : hero.palette,
+        "--skin-highlight": hasSkin ? skin.colors[1] : hero.palette,
+      } as React.CSSProperties}
+      aria-label={`${hero.name}, ${hero.role}${hasSkin ? `, Skin ${skin.name}` : ""}`}
     >
       <span className="portrait-aura" />
       <span className="portrait-body" />
@@ -77,6 +84,7 @@ export function GameIcon({ name, label }: { name: string; label?: string }) {
     pause: "Ⅱ",
     play: "▶",
     retreat: "↩",
+    sparkle: "✦",
   };
   return (
     <span className={`game-icon icon-${name}`} aria-label={label} aria-hidden={label ? undefined : true}>
@@ -108,6 +116,7 @@ const NAV_ITEMS: { screen: AppScreen; label: string; icon: string }[] = [
   { screen: "boxes", label: "Boxen", icon: "box" },
   { screen: "heroes", label: "Helden", icon: "hero" },
   { screen: "gear", label: "Ausrüstung", icon: "bag" },
+  { screen: "cosmetics", label: "Kosmetik", icon: "sparkle" },
   { screen: "team", label: "Team", icon: "team" },
 ];
 

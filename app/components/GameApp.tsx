@@ -7,6 +7,7 @@ import { useDungeonRun } from "../game/use-dungeon-run";
 import { usePlayerProgress } from "../game/use-player-progress";
 import { BoxHall, BoxOpening } from "./BoxHall";
 import { GearInventory, HeroesCollection, TeamBuilder } from "./Collection";
+import { CosmeticsWardrobe } from "./Cosmetics";
 import { DungeonRunView } from "./DungeonRun";
 import { DungeonSelect } from "./DungeonSelect";
 import { Lobby } from "./Lobby";
@@ -136,6 +137,13 @@ export function GameApp() {
       )}
       {screen === "heroes" && <HeroesCollection progress={player.progress} actions={collectionActions} />}
       {screen === "gear" && <GearInventory progress={player.progress} actions={collectionActions} />}
+      {screen === "cosmetics" && (
+        <CosmeticsWardrobe
+          progress={player.progress}
+          actions={{ equipCosmetic: player.equipCosmetic, unequipCosmetic: player.unequipCosmetic }}
+          onOpenBoxes={() => navigate("boxes")}
+        />
+      )}
       {screen === "team" && (
         <TeamBuilder progress={player.progress} actions={collectionActions} onAdventure={() => navigate("dungeons")} />
       )}
