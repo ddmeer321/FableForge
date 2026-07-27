@@ -721,7 +721,7 @@ function CombatView({
   const frostSeconds = Math.max(0, Math.ceil((combat.environmentNextAt - combat.lastTick) / 1000));
 
   return (
-    <section className={`combat-view ${combat.paused ? "paused" : ""} ${lowHealth ? "low-health-warning" : ""}`}>
+    <section className={`combat-view ${boss ? "has-boss" : ""} ${combat.paused ? "paused" : ""} ${lowHealth ? "low-health-warning" : ""}`}>
       {boss && (
         <div className="boss-health-banner">
           <span>BOSS · {livingEnemies} GEGNER VERBLEIBEND</span>

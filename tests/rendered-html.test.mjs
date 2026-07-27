@@ -52,6 +52,8 @@ test("keeps responsive overrides in deliberate cascade order", async () => {
   assert.ok(tablet < touchLandscape);
   assert.ok(touchLandscape < tabletLandscape);
   assert.match(css.slice(touchLandscape), /any-pointer:\s*coarse/);
+  assert.match(css.slice(tabletLandscape), /\.combat-view\.has-boss\s*\{\s*grid-template-rows:\s*auto/);
+  assert.match(css.slice(tabletLandscape), /\.boss-health-banner > div\s*\{\s*height:\s*6px/);
 });
 
 test("ships immersive dungeon animation layers with an accessible fallback", async () => {
@@ -63,6 +65,7 @@ test("ships immersive dungeon animation layers with an accessible fallback", asy
   assert.match(component, /map-weather/);
   assert.match(component, /combat-impact-ring/);
   assert.match(component, /combat-result-card/);
+  assert.match(component, /boss \? "has-boss"/);
   assert.match(component, /EVENT_MOTIONS/);
   assert.match(component, /reward-celebration/);
   assert.match(css, /\.atmosphere-forest/);

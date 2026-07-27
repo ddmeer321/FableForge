@@ -5518,6 +5518,36 @@
     padding-inline: 11px;
   }
 
+  .boss-health-banner {
+    gap: 4px 10px;
+    padding: 7px 16px 6px;
+  }
+
+  .boss-health-banner > span {
+    font-size: 8px;
+    letter-spacing: .08em;
+  }
+
+  .boss-health-banner > strong {
+    overflow: hidden;
+    font-size: 15px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .boss-health-banner > div {
+    height: 8px;
+  }
+
+  .boss-health-banner small {
+    font-size: 8px;
+    line-height: 1;
+  }
+
+  .boss-health-banner + .frost-wave-indicator {
+    top: 58px;
+  }
+
   .battle-stage {
     min-height: clamp(360px, 43dvh, 450px);
     gap: 8px;
@@ -5757,6 +5787,10 @@
     overflow: hidden;
   }
 
+  .combat-view.has-boss {
+    grid-template-rows: auto minmax(130px, 1fr) 180px;
+  }
+
   .battle-stage {
     min-height: 0;
     height: auto;
@@ -5845,6 +5879,35 @@
     display: grid;
     grid-template-rows: minmax(300px, 1fr) auto;
     overflow: hidden;
+  }
+
+  .combat-view.has-boss {
+    grid-template-rows: auto minmax(250px, 1fr) auto;
+  }
+
+  .boss-health-banner {
+    gap: 3px 9px;
+    padding: 5px 18px 4px;
+  }
+
+  .boss-health-banner > span {
+    font-size: 7px;
+  }
+
+  .boss-health-banner > strong {
+    font-size: 14px;
+  }
+
+  .boss-health-banner > div {
+    height: 6px;
+  }
+
+  .boss-health-banner small {
+    font-size: 7px;
+  }
+
+  .boss-health-banner + .frost-wave-indicator {
+    top: 48px;
   }
 
   .battle-stage {
