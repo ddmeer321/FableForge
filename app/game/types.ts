@@ -205,10 +205,13 @@ export type CombatHero = {
   shield: number;
   nextAction: number;
   shelterCooldownUntil: number;
+  powerUntil: number;
+  shelterReadyRound: number;
   position: TeamPosition;
   behavior: TeamBehavior;
   target: TargetPriority;
-  powerUntil: number;
+  powerTurns: number;
+  skipTurns: number;
 };
 
 export type CombatEnemy = {
@@ -228,8 +231,26 @@ export type CombatEnemy = {
   maxHp: number;
   attack: number;
   defense: number;
+  initiative: number;
+  initiativePenalty: number;
   nextAction: number;
   boss: boolean;
+};
+
+export type CombatTurnActor = {
+  id: string;
+  side: "hero" | "enemy";
+  initiative: number;
+};
+
+export type PlayerCombatActionId = "quick" | "heavy" | "disrupt" | "signature";
+
+export type PlayerCombatAction = {
+  id: PlayerCombatActionId;
+  name: string;
+  description: string;
+  icon: string;
+  cooldown: number;
 };
 
 export type CombatEffect = {
@@ -245,6 +266,12 @@ export type CombatState = {
   dungeonId: string;
   heroes: CombatHero[];
   enemies: CombatEnemy[];
+  playerHeroId: string;
+  turnOrder: CombatTurnActor[];
+  turnIndex: number;
+  round: number;
+  turnReadyAt: number;
+  playerActionCooldowns: Record<PlayerCombatActionId, number>;
   shelterHeroId: string | null;
   paused: boolean;
   outcome: "victory" | "defeat" | null;
@@ -252,11 +279,13 @@ export type CombatState = {
   healItems: number;
   powerTonics: number;
   switchReadyAt: number;
+  shelterSwitchReadyRound: number;
   log: string[];
   effects: CombatEffect[];
   effectSequence: number;
   damageDone: number;
   environmentNextAt: number;
+  environmentNextRound: number;
   environmentPulse: number;
   startedAt: number;
   lastTick: number;

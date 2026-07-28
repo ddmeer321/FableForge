@@ -10,6 +10,15 @@ import {
   normalizeProgress,
   tickCombat,
 } from "../app/game/logic";
+import {
+  createTurnCombat,
+  getCurrentCombatActor,
+  getPlayerCombatActions,
+  isPlayerCombatTurn,
+  moveTurnHeroToShelter,
+  performPlayerCombatAction,
+  tickTurnCombat,
+} from "../app/game/turn-combat";
 
 test("the cosmetics catalog contains only equipable skins, auras and trails", () => {
   assert.ok(COSMETICS.length >= 12);
@@ -46,6 +55,82 @@ function starterProgress() {
   ];
   return progress;
 }
+
+test("turn combat makes the first team hero the only directly controlled character", () => {
+  const progress = starterProgress();
+  const combat = createTurnCombat(progress, progress.team, "fight", []);
+
+  assert.equal(combat.playerHeroId, "brann");
+  assert.equal(getPlayerCombatActions(combat.playerHeroId).length, 4);
+  assert.ok(combat.turnOrder.some((actor) => actor.id === "brann"));
+  assert.ok(combat.turnOrder.some((actor) => actor.id === "astra"));
+  assert.ok(combat.turnOrder.some((actor) => actor.side === "enemy"));
+});
+
+test("turn combat waits for the player's choice and one attack consumes the turn", () => {
+  const progress = starterProgress();
+  const combat = createTurnCombat(progress, progress.team, "fight", []);
+  combat.turnOrder = [{ id: combat.playerHeroId, side: "hero", initiative: 100 }];
+  combat.turnIndex = 0;
+  combat.turnReadyAt = 0;
+  const enemyHp = combat.enemies[0].hp;
+
+  const waiting = tickTurnCombat(combat, []);
+  assert.equal(waiting.enemies[0].hp, enemyHp);
+  assert.equal(isPlayerCombatTurn(waiting), true);
+
+  const attacked = performPlayerCombatAction(waiting, "quick", []);
+  assert.ok(attacked.enemies[0].hp < enemyHp);
+  assert.equal(attacked.round, 2);
+  assert.ok(attacked.effects.some((effect) => effect.sourceId === combat.playerHeroId));
+});
+
+test("companions use their initiative turn autonomously", () => {
+  const progress = starterProgress();
+  const combat = createTurnCombat(progress, progress.team, "fight", []);
+  combat.turnOrder = [{ id: "astra", side: "hero", initiative: 70 }];
+  combat.turnIndex = 0;
+  combat.turnReadyAt = 0;
+  const enemyHp = combat.enemies[0].hp;
+
+  const next = tickTurnCombat(combat, []);
+
+  assert.ok(next.enemies[0].hp < enemyHp);
+  assert.ok(next.log[0].includes("selbstständig"));
+});
+
+test("the shelter costs the player's action and heals only on the sheltered companion's turn", () => {
+  const progress = starterProgress();
+  const combat = createTurnCombat(progress, progress.team, "fight", []);
+  combat.turnOrder = [{ id: combat.playerHeroId, side: "hero", initiative: 100 }];
+  combat.turnIndex = 0;
+  combat.turnReadyAt = 0;
+  const astra = combat.heroes.find((hero) => hero.heroId === "astra");
+  assert.ok(astra);
+  astra.hp = Math.round(astra.maxHp * 0.3);
+
+  const sheltered = moveTurnHeroToShelter(combat, "astra", []);
+  assert.equal(sheltered.shelterHeroId, "astra");
+  assert.equal(sheltered.round, 2);
+  assert.equal(isPlayerCombatTurn(sheltered), false);
+  const hpBeforeShelterTurn = sheltered.heroes.find((hero) => hero.heroId === "astra")!.hp;
+
+  sheltered.turnOrder = [{ id: "astra", side: "hero", initiative: astra.speed }];
+  sheltered.turnIndex = 0;
+  sheltered.turnReadyAt = 0;
+  const healed = tickTurnCombat(sheltered, []);
+
+  assert.ok(healed.heroes.find((hero) => hero.heroId === "astra")!.hp > hpBeforeShelterTurn);
+});
+
+test("initiative points at the current actor", () => {
+  const progress = starterProgress();
+  const combat = createTurnCombat(progress, progress.team, "fight", []);
+  const current = getCurrentCombatActor(combat);
+
+  assert.equal(current, combat.turnOrder[0]);
+  assert.ok((current?.initiative ?? 0) > 0);
+});
 
 test("combat pacing leaves time for tactical decisions", () => {
   const progress = starterProgress();

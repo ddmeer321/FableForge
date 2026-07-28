@@ -2,6 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { getCosmetic, getDungeon, getHero } from "../game/data";
+import {
+  getCurrentCombatActor,
+  getPlayerCombatActions,
+  isPlayerCombatTurn,
+} from "../game/turn-combat";
 import type { DungeonRun, PlayerProgress, RunRewards } from "../game/types";
 import type { DungeonRunController } from "../game/use-dungeon-run";
 import { GameIcon, HeroPortrait } from "./shared";
@@ -640,11 +645,13 @@ function BossIntro({ run, actions }: { run: DungeonRun; actions: RunActions }) {
 function EnemyFigure({
   enemy,
   selected,
+  current,
   effects,
   onSelect,
 }: {
   enemy: NonNullable<DungeonRun["combat"]>["enemies"][number];
   selected: boolean;
+  current?: boolean;
   effects: NonNullable<DungeonRun["combat"]>["effects"];
   onSelect: () => void;
 }) {
@@ -655,7 +662,7 @@ function EnemyFigure({
   );
   return (
     <button
-      className={`enemy-figure enemy-${enemy.kind} ${attackEffect ? "is-attacking" : ""} ${impactEffect ? "is-hit" : ""} ${selected ? "selected" : ""} ${enemy.hp <= 0 ? "defeated" : ""}`}
+      className={`enemy-figure enemy-${enemy.kind} ${current ? "current-turn" : ""} ${attackEffect ? "is-attacking" : ""} ${impactEffect ? "is-hit" : ""} ${selected ? "selected" : ""} ${enemy.hp <= 0 ? "defeated" : ""}`}
       onClick={onSelect}
       disabled={enemy.hp <= 0}
       aria-label={`${enemy.name} als Ziel auswählen`}
@@ -686,6 +693,8 @@ function BattleHeroFigure({
   shield,
   effects,
   sheltered,
+  current,
+  player,
   skinId,
   auraColors,
 }: {
@@ -696,6 +705,8 @@ function BattleHeroFigure({
   shield: number;
   effects: NonNullable<DungeonRun["combat"]>["effects"];
   sheltered: boolean;
+  current?: boolean;
+  player?: boolean;
   skinId?: string;
   auraColors?: [string, string];
 }) {
@@ -721,7 +732,7 @@ function BattleHeroFigure({
         : "fireball";
   return (
     <div
-      className={`battle-hero-figure battle-position-${position.toLowerCase()} ${auraColors ? "has-battle-aura" : ""} ${attackEffect ? `is-attacking attack-${attackStyle}` : ""} ${impactEffect ? "is-hit" : ""} ${healEffect ? "is-healed" : ""} ${shieldEffect ? "is-shielded" : ""} ${hp <= 0 ? "defeated" : ""} ${sheltered ? "sheltered" : ""}`}
+      className={`battle-hero-figure battle-position-${position.toLowerCase()} ${current ? "current-turn" : ""} ${player ? "player-character" : ""} ${auraColors ? "has-battle-aura" : ""} ${attackEffect ? `is-attacking attack-${attackStyle}` : ""} ${impactEffect ? "is-hit" : ""} ${healEffect ? "is-healed" : ""} ${shieldEffect ? "is-shielded" : ""} ${hp <= 0 ? "defeated" : ""} ${sheltered ? "sheltered" : ""}`}
       style={auraColors ? {
         "--party-aura": auraColors[0],
         "--party-aura-soft": auraColors[1],
@@ -739,6 +750,7 @@ function BattleHeroFigure({
       {healEffect && <span className="combat-heal-burst" key={`heal-${healEffect.id}`}><i /><i /><i /></span>}
       {shieldEffect && <span className="combat-shield-burst" key={`shield-${shieldEffect.id}`} />}
       <strong>{definition.name}</strong>
+      {player && <span className="player-marker">DU</span>}
       <div className="battle-bar"><i style={{ width: `${Math.max(0, (hp / maxHp) * 100)}%` }} /></div>
       {shield > 0 && <span className="figure-shield">{Math.ceil(shield)}</span>}
       {heroEffects.map((effect) => <b className={`combat-float float-${effect.kind}`} key={effect.id}>{effect.text}</b>)}
@@ -746,6 +758,8 @@ function BattleHeroFigure({
   );
 }
 
+// Die alte Ansicht bleibt bis zur nächsten UI-Bereinigung als lesbare Migrationsreferenz erhalten.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function CombatView({
   run,
   progress,
@@ -937,6 +951,303 @@ function CombatView({
   );
 }
 
+function InitiativePortrait({
+  actor,
+  combat,
+  active,
+}: {
+  actor: NonNullable<DungeonRun["combat"]>["turnOrder"][number];
+  combat: NonNullable<DungeonRun["combat"]>;
+  active: boolean;
+}) {
+  if (actor.side === "hero") {
+    const definition = getHero(actor.id);
+    return (
+      <div className={`initiative-token hero-token ${active ? "active" : ""}`}>
+        <span>{definition?.name.slice(0, 1) ?? "?"}</span>
+        <b>{actor.id === combat.playerHeroId ? "DU" : definition?.name}</b>
+        <small>{actor.initiative}</small>
+      </div>
+    );
+  }
+  const enemy = combat.enemies.find((entry) => entry.id === actor.id);
+  return (
+    <div className={`initiative-token enemy-token ${active ? "active" : ""}`}>
+      <span><GameIcon name={enemy?.boss ? "boss" : "claw"} /></span>
+      <b>{enemy?.name ?? "Gegner"}</b>
+      <small>{actor.initiative}</small>
+    </div>
+  );
+}
+
+function TurnCombatView({
+  run,
+  progress,
+  actions,
+}: {
+  run: DungeonRun;
+  progress: PlayerProgress;
+  actions: RunActions;
+}) {
+  const combat = run.combat;
+  if (!combat) return null;
+  const currentActor = getCurrentCombatActor(combat);
+  const playerTurn = isPlayerCombatTurn(combat);
+  const playerHero = combat.heroes.find((hero) => hero.heroId === combat.playerHeroId);
+  const playerDefinition = playerHero ? getHero(playerHero.heroId) : null;
+  const sheltered = combat.heroes.find((hero) => hero.heroId === combat.shelterHeroId);
+  const boss = combat.enemies.find((enemy) => enemy.boss);
+  const livingEnemies = combat.enemies.filter((enemy) => enemy.hp > 0).length;
+  const frost = run.dungeonId === "frostglass-cavern";
+  const lowHealth = Boolean(playerHero && playerHero.hp > 0 && playerHero.hp / playerHero.maxHp < 0.28);
+  const cosmeticEffects = cosmeticEffectStyle(progress);
+  const playerActions = getPlayerCombatActions(combat.playerHeroId);
+  const orderedActors = combat.turnOrder.length
+    ? [...combat.turnOrder.slice(combat.turnIndex), ...combat.turnOrder.slice(0, combat.turnIndex)]
+    : [];
+  const currentName = currentActor?.side === "hero"
+    ? currentActor.id === combat.playerHeroId
+      ? "Du bist dran"
+      : `${getHero(currentActor.id)?.name ?? "Gefährte"} handelt`
+    : `${combat.enemies.find((enemy) => enemy.id === currentActor?.id)?.name ?? "Gegner"} greift an`;
+
+  return (
+    <section
+      className={`combat-view turn-combat-view ${boss ? "has-boss" : ""} ${cosmeticEffects.trail ? "has-combat-trail" : ""} ${combat.paused ? "paused" : ""} ${lowHealth ? "low-health-warning" : ""} ${playerTurn ? "awaiting-player" : "auto-turn"}`}
+      style={cosmeticEffects.style}
+    >
+      {boss && (
+        <div className="boss-health-banner">
+          <span>BOSS · {livingEnemies} GEGNER VERBLEIBEND</span>
+          <strong>{boss.name}</strong>
+          <div><i style={{ width: `${(boss.hp / boss.maxHp) * 100}%` }} /></div>
+          <small>{Math.ceil(boss.hp)} / {boss.maxHp}</small>
+        </div>
+      )}
+      {!boss && <div className="enemy-counter">{livingEnemies} GEGNER VERBLEIBEND</div>}
+
+      <div className="initiative-panel" aria-label="Zugreihenfolge">
+        <div className="initiative-heading">
+          <span>RUNDE {combat.round}</span>
+          <strong>{currentName}</strong>
+          {frost && (
+            <small>
+              <GameIcon name="snow" /> Frostwelle in {Math.max(0, combat.environmentNextRound - combat.round)} Runden
+            </small>
+          )}
+        </div>
+        <div className="initiative-track">
+          {orderedActors.map((actor, index) => (
+            <InitiativePortrait
+              actor={actor}
+              combat={combat}
+              active={index === 0}
+              key={`${actor.side}-${actor.id}`}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="battle-stage">
+        <span className="battle-canopy canopy-left" />
+        <span className="battle-canopy canopy-right" />
+        <span className="battle-ground" />
+        <div className={`battle-weather ${frost ? "battle-snow" : "battle-fireflies"}`} aria-hidden="true">
+          {ATMOSPHERE_PARTICLES.map((index) => (
+            <i key={index} style={{ "--particle-index": index } as React.CSSProperties} />
+          ))}
+        </div>
+        <div className="hero-formation" aria-label="Dein Team">
+          {combat.heroes.map((hero) => (
+            <BattleHeroFigure
+              key={hero.heroId}
+              {...hero}
+              current={currentActor?.side === "hero" && currentActor.id === hero.heroId}
+              player={hero.heroId === combat.playerHeroId}
+              sheltered={combat.shelterHeroId === hero.heroId}
+              effects={combat.effects}
+              skinId={progress.equippedCosmetics.skins[hero.heroId]}
+              auraColors={cosmeticEffects.aura?.colors}
+            />
+          ))}
+        </div>
+        <span className="battle-direction" aria-hidden="true">→</span>
+        <div className="enemy-formation" aria-label="Gegner">
+          {combat.enemies.map((enemy) => (
+            <EnemyFigure
+              enemy={enemy}
+              effects={combat.effects}
+              key={enemy.id}
+              current={currentActor?.side === "enemy" && currentActor.id === enemy.id}
+              selected={combat.selectedEnemyId === enemy.id}
+              onSelect={() => actions.selectEnemy(enemy.id)}
+            />
+          ))}
+        </div>
+        {combat.paused && (
+          <div className="pause-banner">
+            <GameIcon name="pause" />
+            <strong>PAUSIERT</strong>
+            <small>Die Initiative wartet auf dich.</small>
+          </div>
+        )}
+      </div>
+
+      <div className="turn-battle-interface">
+        <main className={`player-turn-panel ${playerTurn ? "ready" : ""}`}>
+          <div className="player-turn-heading">
+            {playerDefinition && (
+              <HeroPortrait
+                hero={playerDefinition}
+                size="small"
+                skinId={progress.equippedCosmetics.skins[playerDefinition.id]}
+                muted={!playerHero || playerHero.hp <= 0}
+              />
+            )}
+            <div>
+              <span>{playerTurn ? "DEINE ENTSCHEIDUNG" : "INITIATIVE LÄUFT"}</span>
+              <strong>{playerTurn ? "Wähle genau eine Aktion" : currentName}</strong>
+              <small>
+                {playerHero
+                  ? `${Math.ceil(playerHero.hp)} / ${playerHero.maxHp} LP · Initiative ${playerHero.speed}`
+                  : "Kein spielbarer Charakter"}
+              </small>
+            </div>
+          </div>
+
+          <div className="player-action-grid">
+            {playerActions.map((action) => {
+              const cooldown = combat.playerActionCooldowns[action.id];
+              const disabled = !playerTurn || cooldown > 0 || Boolean(combat.outcome) || !playerHero || playerHero.hp <= 0;
+              return (
+                <button
+                  className={`player-action action-${action.id}`}
+                  disabled={disabled}
+                  onClick={() => actions.usePlayerAction(action.id)}
+                  key={action.id}
+                >
+                  <GameIcon name={action.icon} />
+                  <span>
+                    <b>{action.name}</b>
+                    <small>{cooldown > 0 ? `NOCH ${cooldown} RUNDE${cooldown > 1 ? "N" : ""}` : action.description}</small>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="target-and-log">
+            <span>
+              ZIEL: <b>{combat.enemies.find((enemy) => enemy.id === combat.selectedEnemyId)?.name ?? "automatisch"}</b>
+              <small> Gegner im Kampffeld antippen, um das Ziel zu wechseln.</small>
+            </span>
+            <div className="turn-combat-log">
+              {combat.log.slice(0, 3).map((message, index) => <p key={`${message}-${index}`}>{message}</p>)}
+            </div>
+          </div>
+        </main>
+
+        <aside className="companion-and-shelter-panel">
+          <div className="companion-panel-title">
+            <span>GEFÄHRTEN</span>
+            <small>Sie entscheiden anhand ihrer Rolle selbst.</small>
+          </div>
+          <div className="companion-list">
+            {combat.heroes
+              .filter((hero) => hero.heroId !== combat.playerHeroId)
+              .map((hero) => {
+                const definition = getHero(hero.heroId);
+                const inShelter = hero.heroId === combat.shelterHeroId;
+                if (!definition) return null;
+                return (
+                  <article className={`${inShelter ? "in-shelter" : ""} ${hero.hp <= 0 ? "defeated" : ""}`} key={hero.heroId}>
+                    <HeroPortrait
+                      hero={definition}
+                      size="small"
+                      skinId={progress.equippedCosmetics.skins[hero.heroId]}
+                      muted={hero.hp <= 0}
+                    />
+                    <div>
+                      <strong>{definition.name}</strong>
+                      <span>{definition.role} · {inShelter ? "Schutzraum" : "handelt selbst"}</span>
+                      <div className="battle-bar"><i style={{ width: `${Math.max(0, hero.hp / hero.maxHp * 100)}%` }} /></div>
+                    </div>
+                    {!combat.shelterHeroId && !inShelter && (
+                      <button
+                        disabled={
+                          !playerTurn ||
+                          hero.hp <= 0 ||
+                          hero.shelterReadyRound > combat.round ||
+                          combat.shelterSwitchReadyRound > combat.round
+                        }
+                        onClick={() => actions.shelterHero(hero.heroId)}
+                      >
+                        RETTEN
+                      </button>
+                    )}
+                  </article>
+                );
+              })}
+          </div>
+
+          <div className={`turn-sanctuary ${sheltered ? "occupied" : ""}`}>
+            <div className="sanctuary-title">
+              <GameIcon name="shield" />
+              <span>
+                <b>SCHUTZRAUM</b>
+                <small>Heilt nur im eigenen Initiative-Zug</small>
+              </span>
+            </div>
+            {sheltered ? (() => {
+              const definition = getHero(sheltered.heroId);
+              return definition ? (
+                <div className="turn-sanctuary-occupant">
+                  <HeroPortrait hero={definition} size="small" skinId={progress.equippedCosmetics.skins[sheltered.heroId]} />
+                  <div>
+                    <strong>{definition.name}</strong>
+                    <div className="battle-bar"><i style={{ width: `${sheltered.hp / sheltered.maxHp * 100}%` }} /></div>
+                    <small>{Math.ceil(sheltered.hp)} / {sheltered.maxHp} LP · Heilgrenze 78 %</small>
+                  </div>
+                </div>
+              ) : null;
+            })() : <p>Wähle bei deinem Zug „Retten“. Das kostet deine gesamte Aktion.</p>}
+            <div className="turn-sanctuary-actions">
+              <button disabled={!playerTurn || !sheltered || combat.healItems <= 0} onClick={() => actions.useItem("heal")}>
+                <GameIcon name="heal" /> Heilration <b>{combat.healItems}</b>
+              </button>
+              <button disabled={!playerTurn || !sheltered || combat.powerTonics <= 0} onClick={() => actions.useItem("power")}>
+                <GameIcon name="power" /> Kraft <b>{combat.powerTonics}</b>
+              </button>
+              <button
+                disabled={!playerTurn || !sheltered || combat.shelterSwitchReadyRound > combat.round}
+                onClick={actions.returnShelteredHero}
+              >
+                ZURÜCK INS FELD
+              </button>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      {combat.outcome && (
+        <div className={`combat-result-banner result-${combat.outcome}`}>
+          {combat.outcome === "victory" && (
+            <div className="combat-victory-sparks" aria-hidden="true">
+              {ATMOSPHERE_PARTICLES.slice(0, 8).map((index) => <i key={index} />)}
+            </div>
+          )}
+          <div className="combat-result-card">
+            <span>{combat.outcome === "victory" ? "RAUM GESICHERT" : "DEIN CHARAKTER IST BESIEGT"}</span>
+            <h2>{combat.outcome === "victory" ? "Der Weg ist frei!" : "Die Reise endet hier."}</h2>
+            <p>{combat.outcome === "victory" ? `${combat.damageDone} Schaden verursacht.` : "Schütze deinen eigenen Charakter – fällt er, endet der Kampf."}</p>
+            <button onClick={actions.continueAfterCombat}>{combat.outcome === "victory" ? "WEITER ZUM PFAD" : "RUN BEENDEN"}</button>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function RewardView({ run, onClaim }: { run: DungeonRun; onClaim: (rewards: RunRewards) => void }) {
   const frost = run.dungeonId === "frostglass-cavern";
   const rewards = useMemo<RunRewards>(() => ({
@@ -1020,7 +1331,7 @@ export function DungeonRunView({
       {run.phase === "event" && <EventView run={run} actions={actions} />}
       {run.phase === "powerup" && <PowerupView run={run} actions={actions} />}
       {run.phase === "bossIntro" && <BossIntro run={run} actions={actions} />}
-      {run.phase === "combat" && <CombatView run={run} progress={progress} actions={actions} />}
+      {run.phase === "combat" && <TurnCombatView run={run} progress={progress} actions={actions} />}
       {run.phase === "reward" && <RewardView run={run} onClaim={onClaimRewards} />}
       {run.phase === "defeat" && <DefeatView run={run} onRetreat={onRetreat} />}
     </main>

@@ -3,21 +3,23 @@
 import { useCallback, useEffect, useState } from "react";
 import { RUN_BUFFS } from "./data";
 import {
-  activateHeroAbility,
-  applyCombatItem,
   beginRoomTravel,
-  createCombat,
   createEventForRoom,
   createRun,
-  cycleHeroPosition,
-  moveHeroToShelter,
-  returnHeroFromShelter,
   selectRunBuffs,
-  tickCombat,
 } from "./logic";
+import {
+  applyTurnCombatItem,
+  createTurnCombat,
+  moveTurnHeroToShelter,
+  performPlayerCombatAction,
+  returnTurnHeroFromShelter,
+  tickTurnCombat,
+} from "./turn-combat";
 import type {
   CombatState,
   DungeonRun,
+  PlayerCombatActionId,
   PlayerProgress,
   RoomChoice,
   RunBuff,
@@ -90,7 +92,7 @@ export function useDungeonRun(progress: PlayerProgress) {
     const timer = window.setInterval(() => {
       setRun((current) => {
         if (!current || current.phase !== "combat" || !current.combat) return current;
-        return { ...current, combat: tickCombat(current.combat, current.buffs) };
+        return { ...current, combat: tickTurnCombat(current.combat, current.buffs) };
       });
     }, 180);
     return () => window.clearInterval(timer);
@@ -125,7 +127,7 @@ export function useDungeonRun(progress: PlayerProgress) {
           return {
             ...base,
             phase: "combat",
-            combat: createCombat(
+            combat: createTurnCombat(
               progress,
               progress.team,
               choice.type,
@@ -191,7 +193,7 @@ export function useDungeonRun(progress: PlayerProgress) {
               currentRoom: ambush,
               phase: "combat",
               event: null,
-              combat: createCombat(
+              combat: createTurnCombat(
                 progress,
                 progress.team,
                 "elite",
@@ -272,7 +274,7 @@ export function useDungeonRun(progress: PlayerProgress) {
               currentRoom: ambush,
               phase: "combat",
               event: null,
-              combat: createCombat(
+              combat: createTurnCombat(
                 progress,
                 progress.team,
                 "elite",
@@ -363,7 +365,7 @@ export function useDungeonRun(progress: PlayerProgress) {
         phase: "combat",
         currentRoom: bossRoom,
         pathHistory: [...current.pathHistory, bossRoom],
-        combat: createCombat(
+        combat: createTurnCombat(
           progress,
           progress.team,
           "boss",
@@ -417,31 +419,49 @@ export function useDungeonRun(progress: PlayerProgress) {
     });
   }, []);
 
-  const useAbility = useCallback((heroId: string) => {
+  const usePlayerAction = useCallback((actionId: PlayerCombatActionId) => {
     setRun((current) =>
       current?.combat
-        ? { ...current, combat: activateHeroAbility(current.combat, heroId, current.buffs) }
+        ? { ...current, combat: performPlayerCombatAction(current.combat, actionId, current.buffs) }
         : current,
     );
   }, []);
 
+  // Vorübergehende Kompatibilität für die nicht mehr gerenderte alte Kampfansicht.
+  const useAbility = useCallback((_heroId: string) => {
+    void _heroId;
+    setRun((current) =>
+      current?.combat
+        ? { ...current, combat: performPlayerCombatAction(current.combat, "signature", current.buffs) }
+        : current,
+    );
+  }, []);
+
+  const changePosition = useCallback((_heroId: string) => {
+    void _heroId;
+  }, []);
+
   const shelterHero = useCallback((heroId: string) => {
     setRun((current) =>
-      current?.combat ? { ...current, combat: moveHeroToShelter(current.combat, heroId) } : current,
+      current?.combat
+        ? { ...current, combat: moveTurnHeroToShelter(current.combat, heroId, current.buffs) }
+        : current,
     );
   }, []);
 
   const returnShelteredHero = useCallback(() => {
     setRun((current) =>
       current?.combat
-        ? { ...current, combat: returnHeroFromShelter(current.combat, current.buffs) }
+        ? { ...current, combat: returnTurnHeroFromShelter(current.combat, current.buffs) }
         : current,
     );
   }, []);
 
   const useItem = useCallback((item: "heal" | "power") => {
     setRun((current) =>
-      current?.combat ? { ...current, combat: applyCombatItem(current.combat, item) } : current,
+      current?.combat
+        ? { ...current, combat: applyTurnCombatItem(current.combat, item, current.buffs) }
+        : current,
     );
   }, []);
 
@@ -461,14 +481,6 @@ export function useDungeonRun(progress: PlayerProgress) {
     );
   }, []);
 
-  const changePosition = useCallback((heroId: string) => {
-    setRun((current) =>
-      current?.combat
-        ? { ...current, combat: cycleHeroPosition(current.combat, heroId) }
-        : current,
-    );
-  }, []);
-
   const endRun = useCallback(() => setRun(null), []);
 
   return {
@@ -480,6 +492,7 @@ export function useDungeonRun(progress: PlayerProgress) {
     chooseBuff,
     startBoss,
     continueAfterCombat,
+    usePlayerAction,
     useAbility,
     shelterHero,
     returnShelteredHero,

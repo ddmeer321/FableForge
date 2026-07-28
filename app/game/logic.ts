@@ -460,6 +460,8 @@ function enemy(
     maxHp: hp,
     attack,
     defense,
+    initiative: boss ? 72 : kind === "wolf" || kind === "frost-wolf" ? 68 : 54,
+    initiativePenalty: 0,
     nextAction: Date.now() + 1400 + Math.random() * 500,
     boss,
   };
@@ -524,18 +526,34 @@ export function createCombat(
         shield: 0,
         nextAction: start + 500 + Math.random() * 500,
         shelterCooldownUntil: 0,
+        shelterReadyRound: 0,
         position: slot.position,
         behavior: slot.behavior,
         target: slot.target,
         powerUntil: 0,
+        powerTurns: 0,
+        skipTurns: 0,
       } satisfies CombatHero;
     })
     .filter((hero): hero is CombatHero => Boolean(hero));
 
+  const enemies = enemiesForRoom(type, dungeonId);
+  const playerHeroId = heroes[0]?.heroId ?? "";
+  const turnOrder = [
+    ...heroes.map((hero) => ({ id: hero.heroId, side: "hero" as const, initiative: hero.speed })),
+    ...enemies.map((entry) => ({ id: entry.id, side: "enemy" as const, initiative: entry.initiative })),
+  ].sort((a, b) => b.initiative - a.initiative);
+
   return {
     dungeonId,
     heroes,
-    enemies: enemiesForRoom(type, dungeonId),
+    enemies,
+    playerHeroId,
+    turnOrder,
+    turnIndex: 0,
+    round: 1,
+    turnReadyAt: start,
+    playerActionCooldowns: { quick: 0, heavy: 0, disrupt: 0, signature: 0 },
     shelterHeroId: null,
     paused: false,
     outcome: null,
@@ -543,6 +561,7 @@ export function createCombat(
     healItems: 2 + bonusHealItems,
     powerTonics: 1,
     switchReadyAt: 0,
+    shelterSwitchReadyRound: 0,
     log: dungeonId === "frostglass-cavern"
       ? ["Der Frost reagiert auf jede Bewegung.", "Der Schutzraum bewahrt einen Helden vor Frostwellen."]
       : ["Der Kampf beginnt. Fähigkeiten laden sich durch Angriffe auf.", "Wähle Ziele und nutze den Schutzraum."],
@@ -550,6 +569,7 @@ export function createCombat(
     effectSequence: 0,
     damageDone: 0,
     environmentNextAt: dungeonId === "frostglass-cavern" ? start + 7000 : Number.POSITIVE_INFINITY,
+    environmentNextRound: dungeonId === "frostglass-cavern" ? 3 : Number.POSITIVE_INFINITY,
     environmentPulse: 0,
     startedAt: start,
     lastTick: start,
