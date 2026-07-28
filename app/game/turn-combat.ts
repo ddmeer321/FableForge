@@ -228,6 +228,7 @@ function advanceTurn(state: CombatState, buffs: RunBuff[]) {
     turnIndex,
     round,
     playerActionCooldowns,
+    shelterHealedThisTurn: false,
     turnReadyAt: Date.now() + actionDelay,
     lastTick: Date.now(),
   };
@@ -357,6 +358,7 @@ export function createTurnCombat(
     turnReadyAt: start + 450,
     playerActionCooldowns: { quick: 0, heavy: 0, disrupt: 0, signature: 0 },
     shelterHeroId: null,
+    shelterHealedThisTurn: false,
     paused: false,
     outcome: null,
     selectedEnemyId: enemies[0]?.id ?? null,
@@ -480,6 +482,13 @@ function shelterTurn(state: CombatState, hero: CombatHero, buffs: RunBuff[]) {
     ),
   };
   if (healed) next = { ...next, ...addEffect(next, "heal", `+${healed}`, hero.heroId) };
+  if (hero.heroId === state.playerHeroId) {
+    return {
+      ...next,
+      shelterHealedThisTurn: true,
+      turnReadyAt: Number.POSITIVE_INFINITY,
+    };
+  }
   return advanceTurn(next, buffs);
 }
 
@@ -503,7 +512,12 @@ export function tickTurnCombat(state: CombatState, buffs: RunBuff[]): CombatStat
         buffs,
       );
     }
-    if (state.shelterHeroId === hero.heroId) return shelterTurn({ ...state, effects }, hero, buffs);
+    if (state.shelterHeroId === hero.heroId) {
+      if (hero.heroId === state.playerHeroId && state.shelterHealedThisTurn) {
+        return { ...state, effects, lastTick: time };
+      }
+      return shelterTurn({ ...state, effects }, hero, buffs);
+    }
     if (hero.heroId === state.playerHeroId) return { ...state, effects, lastTick: time };
     return helperTurn({ ...state, effects }, hero, buffs);
   }
@@ -592,7 +606,7 @@ export function performPlayerCombatAction(
 }
 
 export function moveTurnHeroToShelter(state: CombatState, heroId: string, buffs: RunBuff[]) {
-  if (!isPlayerCombatTurn(state) || state.shelterHeroId || heroId === state.playerHeroId) return state;
+  if (!isPlayerCombatTurn(state) || state.shelterHeroId) return state;
   const hero = state.heroes.find((entry) => entry.heroId === heroId);
   if (!hero || hero.hp <= 0 || hero.shelterReadyRound > state.round || state.shelterSwitchReadyRound > state.round) {
     return state;
@@ -600,6 +614,7 @@ export function moveTurnHeroToShelter(state: CombatState, heroId: string, buffs:
   return advanceTurn({
     ...state,
     shelterHeroId: heroId,
+    shelterHealedThisTurn: false,
     shelterSwitchReadyRound: state.round + 1,
     log: appendLog(state.log, `${getHero(heroId)?.name} zieht sich in den Schutzraum zurück.`),
   }, buffs);
@@ -608,6 +623,7 @@ export function moveTurnHeroToShelter(state: CombatState, heroId: string, buffs:
 export function returnTurnHeroFromShelter(state: CombatState, buffs: RunBuff[]) {
   if (!isPlayerCombatTurn(state) || !state.shelterHeroId || state.shelterSwitchReadyRound > state.round) return state;
   const heroId = state.shelterHeroId;
+  if (heroId === state.playerHeroId && !state.shelterHealedThisTurn) return state;
   const heroes = state.heroes.map((hero) =>
     hero.heroId === heroId
       ? {
@@ -621,8 +637,23 @@ export function returnTurnHeroFromShelter(state: CombatState, buffs: RunBuff[]) 
     ...state,
     heroes,
     shelterHeroId: null,
+    shelterHealedThisTurn: false,
     shelterSwitchReadyRound: state.round + 1,
     log: appendLog(state.log, `${getHero(heroId)?.name} kehrt ins Feld zurück.`),
+  }, buffs);
+}
+
+export function holdPlayerInShelter(state: CombatState, buffs: RunBuff[]) {
+  if (
+    !isPlayerCombatTurn(state) ||
+    state.shelterHeroId !== state.playerHeroId ||
+    !state.shelterHealedThisTurn
+  ) {
+    return state;
+  }
+  return advanceTurn({
+    ...state,
+    log: appendLog(state.log, `${getHero(state.playerHeroId)?.name} bleibt geschützt.`),
   }, buffs);
 }
 
@@ -632,6 +663,7 @@ export function applyTurnCombatItem(
   buffs: RunBuff[],
 ) {
   if (!isPlayerCombatTurn(state) || !state.shelterHeroId) return state;
+  if (state.shelterHeroId === state.playerHeroId && !state.shelterHealedThisTurn) return state;
   const heroes = state.heroes.map((hero) => ({ ...hero }));
   const target = heroes.find((hero) => hero.heroId === state.shelterHeroId);
   if (!target) return state;

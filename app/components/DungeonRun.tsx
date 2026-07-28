@@ -646,12 +646,14 @@ function EnemyFigure({
   enemy,
   selected,
   current,
+  targeted,
   effects,
   onSelect,
 }: {
   enemy: NonNullable<DungeonRun["combat"]>["enemies"][number];
   selected: boolean;
   current?: boolean;
+  targeted?: boolean;
   effects: NonNullable<DungeonRun["combat"]>["effects"];
   onSelect: () => void;
 }) {
@@ -662,12 +664,13 @@ function EnemyFigure({
   );
   return (
     <button
-      className={`enemy-figure enemy-${enemy.kind} ${current ? "current-turn" : ""} ${attackEffect ? "is-attacking" : ""} ${impactEffect ? "is-hit" : ""} ${selected ? "selected" : ""} ${enemy.hp <= 0 ? "defeated" : ""}`}
+      className={`enemy-figure enemy-${enemy.kind} ${current ? "current-turn" : ""} ${targeted ? "cinematic-target" : ""} ${attackEffect ? "is-attacking" : ""} ${impactEffect ? "is-hit" : ""} ${selected ? "selected" : ""} ${enemy.hp <= 0 ? "defeated" : ""}`}
       onClick={onSelect}
       disabled={enemy.hp <= 0}
       aria-label={`${enemy.name} als Ziel auswählen`}
     >
       <span className="enemy-shadow" />
+      <span className="turn-focus-disc" aria-hidden="true" />
       <span className="enemy-body" />
       <span className="enemy-head" />
       <span className="enemy-ear ear-a" />
@@ -695,6 +698,7 @@ function BattleHeroFigure({
   sheltered,
   current,
   player,
+  targeted,
   skinId,
   auraColors,
 }: {
@@ -707,6 +711,7 @@ function BattleHeroFigure({
   sheltered: boolean;
   current?: boolean;
   player?: boolean;
+  targeted?: boolean;
   skinId?: string;
   auraColors?: [string, string];
 }) {
@@ -732,12 +737,13 @@ function BattleHeroFigure({
         : "fireball";
   return (
     <div
-      className={`battle-hero-figure battle-position-${position.toLowerCase()} ${current ? "current-turn" : ""} ${player ? "player-character" : ""} ${auraColors ? "has-battle-aura" : ""} ${attackEffect ? `is-attacking attack-${attackStyle}` : ""} ${impactEffect ? "is-hit" : ""} ${healEffect ? "is-healed" : ""} ${shieldEffect ? "is-shielded" : ""} ${hp <= 0 ? "defeated" : ""} ${sheltered ? "sheltered" : ""}`}
+      className={`battle-hero-figure battle-position-${position.toLowerCase()} ${current ? "current-turn" : ""} ${targeted ? "cinematic-target" : ""} ${player ? "player-character" : ""} ${auraColors ? "has-battle-aura" : ""} ${attackEffect ? `is-attacking attack-${attackStyle}` : ""} ${impactEffect ? "is-hit" : ""} ${healEffect ? "is-healed" : ""} ${shieldEffect ? "is-shielded" : ""} ${hp <= 0 ? "defeated" : ""} ${sheltered ? "sheltered" : ""}`}
       style={auraColors ? {
         "--party-aura": auraColors[0],
         "--party-aura-soft": auraColors[1],
       } as React.CSSProperties : undefined}
     >
+      <span className="turn-focus-disc" aria-hidden="true" />
       <span className="battle-cosmetic-aura" aria-hidden="true" />
       <HeroPortrait hero={definition} size="medium" skinId={skinId} muted={hp <= 0} />
       <span className={`held-weapon held-weapon-${attackStyle}`} aria-hidden="true" />
@@ -1005,11 +1011,33 @@ function TurnCombatView({
   const orderedActors = combat.turnOrder.length
     ? [...combat.turnOrder.slice(combat.turnIndex), ...combat.turnOrder.slice(0, combat.turnIndex)]
     : [];
-  const currentName = currentActor?.side === "hero"
-    ? currentActor.id === combat.playerHeroId
-      ? "Du bist dran"
-      : `${getHero(currentActor.id)?.name ?? "Gefährte"} handelt`
-    : `${combat.enemies.find((enemy) => enemy.id === currentActor?.id)?.name ?? "Gegner"} greift an`;
+  const latestAction = combat.effects.find((effect) =>
+    effect.sourceId && ["damage", "ability", "heal", "shield"].includes(effect.kind),
+  );
+  const visualActorId = latestAction?.sourceId ?? currentActor?.id ?? null;
+  const visualActorIsHero = Boolean(
+    visualActorId && combat.heroes.some((hero) => hero.heroId === visualActorId),
+  );
+  const visualActorIsEnemy = Boolean(
+    visualActorId && combat.enemies.some((enemy) => enemy.id === visualActorId),
+  );
+  const visualTargetId = latestAction?.targetId ?? null;
+  const statusHero = combat.heroes.find((hero) =>
+    hero.heroId === (visualActorIsHero ? visualActorId : visualTargetId),
+  ) ?? playerHero;
+  const statusHeroDefinition = statusHero ? getHero(statusHero.heroId) : null;
+  const statusHeroLevel = progress.heroes.find((hero) => hero.id === statusHero?.heroId)?.level ?? 1;
+  const statusEnemy = combat.enemies.find((enemy) =>
+    enemy.id === (visualActorIsEnemy ? visualActorId : visualTargetId),
+  ) ?? combat.enemies.find((enemy) => enemy.id === combat.selectedEnemyId)
+    ?? combat.enemies.find((enemy) => enemy.hp > 0);
+  const playerInShelter = combat.shelterHeroId === combat.playerHeroId;
+  const shelterDecisionReady = playerTurn && playerInShelter && combat.shelterHealedThisTurn;
+  const stageFocus = visualActorIsEnemy
+    ? "focus-enemy"
+    : visualActorId === combat.playerHeroId
+      ? "focus-player"
+      : "focus-companion";
 
   return (
     <section
@@ -1026,10 +1054,10 @@ function TurnCombatView({
       )}
       {!boss && <div className="enemy-counter">{livingEnemies} GEGNER VERBLEIBEND</div>}
 
-      <div className="initiative-panel" aria-label="Zugreihenfolge">
+      <div className={`initiative-panel initiative-${currentActor?.side ?? "hero"}`} aria-label="Zugreihenfolge">
         <div className="initiative-heading">
           <span>RUNDE {combat.round}</span>
-          <strong>{currentName}</strong>
+          <div className="initiative-visual-pulse" aria-hidden="true"><i /><i /><i /></div>
           {frost && (
             <small>
               <GameIcon name="snow" /> Frostwelle in {Math.max(0, combat.environmentNextRound - combat.round)} Runden
@@ -1048,7 +1076,10 @@ function TurnCombatView({
         </div>
       </div>
 
-      <div className="battle-stage">
+      <div className={`battle-stage cinematic-battle-stage ${stageFocus} ${latestAction ? "action-in-motion" : ""}`}>
+        <span className="combat-camera-light camera-light-left" />
+        <span className="combat-camera-light camera-light-right" />
+        <span className="combat-action-line" aria-hidden="true"><i /><b /></span>
         <span className="battle-canopy canopy-left" />
         <span className="battle-canopy canopy-right" />
         <span className="battle-ground" />
@@ -1062,7 +1093,8 @@ function TurnCombatView({
             <BattleHeroFigure
               key={hero.heroId}
               {...hero}
-              current={currentActor?.side === "hero" && currentActor.id === hero.heroId}
+              current={visualActorIsHero && visualActorId === hero.heroId}
+              targeted={visualTargetId === hero.heroId}
               player={hero.heroId === combat.playerHeroId}
               sheltered={combat.shelterHeroId === hero.heroId}
               effects={combat.effects}
@@ -1078,12 +1110,106 @@ function TurnCombatView({
               enemy={enemy}
               effects={combat.effects}
               key={enemy.id}
-              current={currentActor?.side === "enemy" && currentActor.id === enemy.id}
+              current={visualActorIsEnemy && visualActorId === enemy.id}
+              targeted={visualTargetId === enemy.id}
               selected={combat.selectedEnemyId === enemy.id}
               onSelect={() => actions.selectEnemy(enemy.id)}
             />
           ))}
         </div>
+
+        {statusHero && statusHeroDefinition && (
+          <div className={`battle-corner-status hero-corner-status ${statusHero.heroId === combat.playerHeroId ? "is-player" : "is-companion"}`}>
+            <HeroPortrait
+              hero={statusHeroDefinition}
+              size="small"
+              skinId={progress.equippedCosmetics.skins[statusHero.heroId]}
+              muted={statusHero.hp <= 0}
+            />
+            <div>
+              <span><b>{statusHeroDefinition.name}</b><small>LV. {statusHeroLevel}</small></span>
+              <div className="corner-health-bar"><i style={{ width: `${Math.max(0, statusHero.hp / statusHero.maxHp * 100)}%` }} /></div>
+              <small>{Math.ceil(statusHero.hp)} / {statusHero.maxHp} LP</small>
+            </div>
+          </div>
+        )}
+
+        {statusEnemy && (
+          <button
+            className={`battle-corner-status enemy-corner-status ${combat.selectedEnemyId === statusEnemy.id ? "selected" : ""}`}
+            onClick={() => actions.selectEnemy(statusEnemy.id)}
+            disabled={statusEnemy.hp <= 0}
+          >
+            <span><b>{statusEnemy.name}</b><small>{statusEnemy.boss ? "BOSS" : `INIT. ${statusEnemy.initiative}`}</small></span>
+            <div className="corner-health-bar"><i style={{ width: `${Math.max(0, statusEnemy.hp / statusEnemy.maxHp * 100)}%` }} /></div>
+            <small>{Math.ceil(statusEnemy.hp)} / {statusEnemy.maxHp} LP</small>
+          </button>
+        )}
+
+        {playerTurn && !combat.outcome && (
+          <div className={`battle-action-dock ${playerInShelter ? "shelter-mode" : ""}`}>
+            {playerInShelter ? (
+              <>
+                <div className="shelter-turn-visual" aria-hidden="true">
+                  <GameIcon name="shield" />
+                  <i /><i /><i />
+                </div>
+                <div className="shelter-dock-copy">
+                  <strong>{combat.shelterHealedThisTurn ? "SCHUTZRAUM BEREIT" : "REGENERATION"}</strong>
+                  <small>{combat.shelterHealedThisTurn ? "Wähle deine Aktion." : "Dein Initiative-Zug heilt dich automatisch."}</small>
+                </div>
+                <div className="shelter-player-actions">
+                  <button disabled={!shelterDecisionReady} onClick={actions.stayInShelter}>
+                    <GameIcon name="shield" /><span><b>GESCHÜTZT BLEIBEN</b><small>Zug beenden</small></span>
+                  </button>
+                  <button disabled={!shelterDecisionReady || combat.shelterSwitchReadyRound > combat.round} onClick={actions.returnShelteredHero}>
+                    <GameIcon name="play" /><span><b>ZURÜCK INS FELD</b><small>Zug beenden</small></span>
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="battle-action-title">
+                  <span>DEINE AKTION</span>
+                  <b>{playerDefinition?.name}</b>
+                </div>
+                <div className="battle-move-grid">
+                  {playerActions.map((action) => {
+                    const cooldown = combat.playerActionCooldowns[action.id];
+                    return (
+                      <button
+                        className={`battle-move action-${action.id}`}
+                        disabled={cooldown > 0 || !playerHero || playerHero.hp <= 0}
+                        onClick={() => actions.usePlayerAction(action.id)}
+                        key={action.id}
+                      >
+                        <GameIcon name={action.icon} />
+                        <span>
+                          <b>{action.name}</b>
+                          <small>{cooldown > 0 ? `${cooldown} R.` : action.description}</small>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {!sheltered && playerHero && (
+                  <button
+                    className="self-shelter-action"
+                    disabled={
+                      playerHero.shelterReadyRound > combat.round ||
+                      combat.shelterSwitchReadyRound > combat.round
+                    }
+                    onClick={() => actions.shelterHero(playerHero.heroId)}
+                  >
+                    <GameIcon name="shield" />
+                    <span><b>SELBST IN DEN SCHUTZRAUM</b><small>Verbraucht diesen Zug</small></span>
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
         {combat.paused && (
           <div className="pause-banner">
             <GameIcon name="pause" />
@@ -1094,59 +1220,6 @@ function TurnCombatView({
       </div>
 
       <div className="turn-battle-interface">
-        <main className={`player-turn-panel ${playerTurn ? "ready" : ""}`}>
-          <div className="player-turn-heading">
-            {playerDefinition && (
-              <HeroPortrait
-                hero={playerDefinition}
-                size="small"
-                skinId={progress.equippedCosmetics.skins[playerDefinition.id]}
-                muted={!playerHero || playerHero.hp <= 0}
-              />
-            )}
-            <div>
-              <span>{playerTurn ? "DEINE ENTSCHEIDUNG" : "INITIATIVE LÄUFT"}</span>
-              <strong>{playerTurn ? "Wähle genau eine Aktion" : currentName}</strong>
-              <small>
-                {playerHero
-                  ? `${Math.ceil(playerHero.hp)} / ${playerHero.maxHp} LP · Initiative ${playerHero.speed}`
-                  : "Kein spielbarer Charakter"}
-              </small>
-            </div>
-          </div>
-
-          <div className="player-action-grid">
-            {playerActions.map((action) => {
-              const cooldown = combat.playerActionCooldowns[action.id];
-              const disabled = !playerTurn || cooldown > 0 || Boolean(combat.outcome) || !playerHero || playerHero.hp <= 0;
-              return (
-                <button
-                  className={`player-action action-${action.id}`}
-                  disabled={disabled}
-                  onClick={() => actions.usePlayerAction(action.id)}
-                  key={action.id}
-                >
-                  <GameIcon name={action.icon} />
-                  <span>
-                    <b>{action.name}</b>
-                    <small>{cooldown > 0 ? `NOCH ${cooldown} RUNDE${cooldown > 1 ? "N" : ""}` : action.description}</small>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="target-and-log">
-            <span>
-              ZIEL: <b>{combat.enemies.find((enemy) => enemy.id === combat.selectedEnemyId)?.name ?? "automatisch"}</b>
-              <small> Gegner im Kampffeld antippen, um das Ziel zu wechseln.</small>
-            </span>
-            <div className="turn-combat-log">
-              {combat.log.slice(0, 3).map((message, index) => <p key={`${message}-${index}`}>{message}</p>)}
-            </div>
-          </div>
-        </main>
-
         <aside className="companion-and-shelter-panel">
           <div className="companion-panel-title">
             <span>GEFÄHRTEN</span>
@@ -1169,7 +1242,10 @@ function TurnCombatView({
                     />
                     <div>
                       <strong>{definition.name}</strong>
-                      <span>{definition.role} · {inShelter ? "Schutzraum" : "handelt selbst"}</span>
+                      <span className="companion-role-line">
+                        {inShelter ? "Schutzraum" : definition.role}
+                        {!inShelter && <i className="companion-auto-orbit" aria-label="Automatischer Gefährte" />}
+                      </span>
                       <div className="battle-bar"><i style={{ width: `${Math.max(0, hero.hp / hero.maxHp * 100)}%` }} /></div>
                     </div>
                     {!combat.shelterHeroId && !inShelter && (
@@ -1212,18 +1288,26 @@ function TurnCombatView({
               ) : null;
             })() : <p>Wähle bei deinem Zug „Retten“. Das kostet deine gesamte Aktion.</p>}
             <div className="turn-sanctuary-actions">
-              <button disabled={!playerTurn || !sheltered || combat.healItems <= 0} onClick={() => actions.useItem("heal")}>
+              <button
+                disabled={!playerTurn || !sheltered || combat.healItems <= 0 || (playerInShelter && !combat.shelterHealedThisTurn)}
+                onClick={() => actions.useItem("heal")}
+              >
                 <GameIcon name="heal" /> Heilration <b>{combat.healItems}</b>
               </button>
-              <button disabled={!playerTurn || !sheltered || combat.powerTonics <= 0} onClick={() => actions.useItem("power")}>
+              <button
+                disabled={!playerTurn || !sheltered || combat.powerTonics <= 0 || (playerInShelter && !combat.shelterHealedThisTurn)}
+                onClick={() => actions.useItem("power")}
+              >
                 <GameIcon name="power" /> Kraft <b>{combat.powerTonics}</b>
               </button>
-              <button
-                disabled={!playerTurn || !sheltered || combat.shelterSwitchReadyRound > combat.round}
-                onClick={actions.returnShelteredHero}
-              >
-                ZURÜCK INS FELD
-              </button>
+              {!playerInShelter && (
+                <button
+                  disabled={!playerTurn || !sheltered || combat.shelterSwitchReadyRound > combat.round}
+                  onClick={actions.returnShelteredHero}
+                >
+                  ZURÜCK INS FELD
+                </button>
+              )}
             </div>
           </div>
         </aside>

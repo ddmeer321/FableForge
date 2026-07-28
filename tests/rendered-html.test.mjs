@@ -75,6 +75,20 @@ test("ships immersive dungeon animation layers with an accessible fallback", asy
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
+test("stages initiative turns visually with corner status cards and an in-battle move dock", async () => {
+  const component = await readFile(new URL("../app/components/DungeonRun.tsx", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/styles/dungeon.css", import.meta.url), "utf8");
+
+  assert.match(component, /combat-camera-light/);
+  assert.match(component, /battle-corner-status hero-corner-status/);
+  assert.match(component, /battle-corner-status enemy-corner-status/);
+  assert.match(component, /battle-action-dock/);
+  assert.match(component, /SELBST IN DEN SCHUTZRAUM/);
+  assert.match(css, /\.cinematic-battle-stage\.focus-enemy/);
+  assert.match(css, /\.cinematic-battle-stage \.battle-hero-figure\.current-turn/);
+  assert.match(css, /@keyframes battle-camera-impact/);
+});
+
 test("gives the team builder a larger desktop-only layout", async () => {
   const css = await readFile(new URL("../app/styles/collection.css", import.meta.url), "utf8");
   const desktopTeam = css.indexOf("/* Team-Builder auf Desktop");

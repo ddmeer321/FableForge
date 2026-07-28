@@ -555,6 +555,7 @@ export function createCombat(
     turnReadyAt: start,
     playerActionCooldowns: { quick: 0, heavy: 0, disrupt: 0, signature: 0 },
     shelterHeroId: null,
+    shelterHealedThisTurn: false,
     paused: false,
     outcome: null,
     selectedEnemyId: null,

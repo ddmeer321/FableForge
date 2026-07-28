@@ -14,9 +14,11 @@ import {
   createTurnCombat,
   getCurrentCombatActor,
   getPlayerCombatActions,
+  holdPlayerInShelter,
   isPlayerCombatTurn,
   moveTurnHeroToShelter,
   performPlayerCombatAction,
+  returnTurnHeroFromShelter,
   tickTurnCombat,
 } from "../app/game/turn-combat";
 
@@ -121,6 +123,41 @@ test("the shelter costs the player's action and heals only on the sheltered comp
   const healed = tickTurnCombat(sheltered, []);
 
   assert.ok(healed.heroes.find((hero) => hero.heroId === "astra")!.hp > hpBeforeShelterTurn);
+});
+
+test("the player can enter the shelter, receives automatic turn healing and chooses what happens next", () => {
+  const progress = starterProgress();
+  const combat = createTurnCombat(progress, progress.team, "fight", []);
+  combat.turnOrder = [{ id: combat.playerHeroId, side: "hero", initiative: 100 }];
+  combat.turnIndex = 0;
+  combat.turnReadyAt = 0;
+  const player = combat.heroes.find((hero) => hero.heroId === combat.playerHeroId);
+  assert.ok(player);
+  player.hp = Math.round(player.maxHp * 0.35);
+
+  const entered = moveTurnHeroToShelter(combat, combat.playerHeroId, []);
+  assert.equal(entered.shelterHeroId, combat.playerHeroId);
+
+  entered.turnOrder = [{ id: combat.playerHeroId, side: "hero", initiative: player.speed }];
+  entered.turnIndex = 0;
+  entered.turnReadyAt = 0;
+  const hpBeforeHealing = entered.heroes.find((hero) => hero.heroId === combat.playerHeroId)!.hp;
+  const healed = tickTurnCombat(entered, []);
+
+  assert.equal(healed.shelterHealedThisTurn, true);
+  assert.equal(getCurrentCombatActor(healed)?.id, combat.playerHeroId);
+  assert.ok(healed.heroes.find((hero) => hero.heroId === combat.playerHeroId)!.hp > hpBeforeHealing);
+
+  const stayed = holdPlayerInShelter(healed, []);
+  assert.equal(stayed.shelterHeroId, combat.playerHeroId);
+  assert.equal(stayed.shelterHealedThisTurn, false);
+
+  stayed.turnOrder = [{ id: combat.playerHeroId, side: "hero", initiative: player.speed }];
+  stayed.turnIndex = 0;
+  stayed.turnReadyAt = 0;
+  const healedAgain = tickTurnCombat(stayed, []);
+  const returned = returnTurnHeroFromShelter(healedAgain, []);
+  assert.equal(returned.shelterHeroId, null);
 });
 
 test("initiative points at the current actor", () => {

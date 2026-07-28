@@ -273,6 +273,7 @@ export type CombatState = {
   turnReadyAt: number;
   playerActionCooldowns: Record<PlayerCombatActionId, number>;
   shelterHeroId: string | null;
+  shelterHealedThisTurn: boolean;
   paused: boolean;
   outcome: "victory" | "defeat" | null;
   selectedEnemyId: string | null;

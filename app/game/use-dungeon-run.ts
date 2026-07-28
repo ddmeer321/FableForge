@@ -11,6 +11,7 @@ import {
 import {
   applyTurnCombatItem,
   createTurnCombat,
+  holdPlayerInShelter,
   moveTurnHeroToShelter,
   performPlayerCombatAction,
   returnTurnHeroFromShelter,
@@ -457,6 +458,14 @@ export function useDungeonRun(progress: PlayerProgress) {
     );
   }, []);
 
+  const stayInShelter = useCallback(() => {
+    setRun((current) =>
+      current?.combat
+        ? { ...current, combat: holdPlayerInShelter(current.combat, current.buffs) }
+        : current,
+    );
+  }, []);
+
   const useItem = useCallback((item: "heal" | "power") => {
     setRun((current) =>
       current?.combat
@@ -496,6 +505,7 @@ export function useDungeonRun(progress: PlayerProgress) {
     useAbility,
     shelterHero,
     returnShelteredHero,
+    stayInShelter,
     useItem,
     togglePause,
     selectEnemy,
