@@ -199,6 +199,10 @@
   margin-top: 0;
 }
 
+.lobby-primary-actions > :only-child {
+  flex-basis: 100%;
+}
+
 .character-creator-test-button {
   min-height: 56px;
   flex: 1 1 52%;
