@@ -6,6 +6,7 @@ import type { AppScreen, BoxDefinition, LootResult, RunRewards } from "../game/t
 import { useDungeonRun } from "../game/use-dungeon-run";
 import { usePlayerProgress } from "../game/use-player-progress";
 import { BoxHall, BoxOpening } from "./BoxHall";
+import { CharacterCreatorTest } from "./CharacterCreatorTest";
 import { GearInventory, HeroesCollection, TeamBuilder } from "./Collection";
 import { CosmeticsWardrobe } from "./Cosmetics";
 import { DungeonRunView } from "./DungeonRun";
@@ -24,6 +25,7 @@ export function GameApp() {
   const runController = useDungeonRun(player.progress);
   const [screen, setScreen] = useState<AppScreen>("lobby");
   const [opening, setOpening] = useState<OpeningState | null>(null);
+  const [characterCreatorOpen, setCharacterCreatorOpen] = useState(false);
 
   const playSound = useCallback(
     (kind: "click" | "box" | "rare" | "heal" | "victory") => {
@@ -130,6 +132,10 @@ export function GameApp() {
           onNavigate={navigate}
           onStarterHero={startHeroBox}
           onStarterGear={startGearBox}
+          onOpenCharacterCreator={() => {
+            playSound("click");
+            setCharacterCreatorOpen(true);
+          }}
         />
       )}
       {screen === "boxes" && (
@@ -178,6 +184,8 @@ export function GameApp() {
           onClose={() => setOpening(null)}
         />
       )}
+
+      <CharacterCreatorTest open={characterCreatorOpen} onClose={() => setCharacterCreatorOpen(false)} />
 
       {screen !== "run" && player.progress.onboarding === "ready" && (
         <div className="save-indicator"><i /> Fortschritt lokal gespeichert</div>

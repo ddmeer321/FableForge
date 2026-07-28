@@ -10,11 +10,13 @@ export function Lobby({
   onNavigate,
   onStarterHero,
   onStarterGear,
+  onOpenCharacterCreator,
 }: {
   progress: PlayerProgress;
   onNavigate: (screen: AppScreen) => void;
   onStarterHero: () => void;
   onStarterGear: () => void;
+  onOpenCharacterCreator: () => void;
 }) {
   const ready = progress.onboarding === "ready";
   const teamHeroes = progress.team
@@ -61,11 +63,17 @@ export function Lobby({
             </button>
           )}
           {ready && (
-            <button className="primary-adventure-button" onClick={() => onNavigate("dungeons")}>
-              <span className="button-shine" />
-              <GameIcon name="route" />
-              ABENTEUER
-            </button>
+            <div className="lobby-primary-actions">
+              <button className="primary-adventure-button" onClick={() => onNavigate("dungeons")}>
+                <span className="button-shine" />
+                <GameIcon name="route" />
+                ABENTEUER
+              </button>
+              <button className="character-creator-test-button" onClick={onOpenCharacterCreator}>
+                <span className="creator-test-figure" aria-hidden="true"><i /><b /></span>
+                <span><small>NEUER PROTOTYP</small>CHARAKTER-ERSTELLUNG TESTEN</span>
+              </button>
+            </div>
           )}
           <div className="lobby-progress-line">
             <div><span>Fortschritt</span><strong>{Math.min(100, 18 + progress.completedRuns * 16)} %</strong></div>

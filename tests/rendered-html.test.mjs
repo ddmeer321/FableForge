@@ -112,3 +112,24 @@ test("ships an equipable cosmetics wardrobe instead of title or emote placeholde
   assert.match(dungeon, /party-aura-effect/);
   assert.match(dungeon, /party-trail-effect/);
 });
+
+test("ships a functional modular full-body character creator prototype", async () => {
+  const app = await readFile(new URL("../app/components/GameApp.tsx", import.meta.url), "utf8");
+  const lobby = await readFile(new URL("../app/components/Lobby.tsx", import.meta.url), "utf8");
+  const creator = await readFile(new URL("../app/components/CharacterCreatorTest.tsx", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/styles/character-creator.css", import.meta.url), "utf8");
+
+  assert.match(app, /CharacterCreatorTest/);
+  assert.match(lobby, /CHARAKTER-ERSTELLUNG TESTEN/);
+  assert.match(creator, /fableforge-character-test-v1/);
+  assert.match(creator, /ModularCharacter/);
+  assert.match(creator, /Hautfarbe/);
+  assert.match(creator, /Augenfarbe/);
+  assert.match(creator, /Haarfarbe/);
+  assert.match(creator, /Ein Accessoire/);
+  assert.match(creator, /window\.localStorage\.setItem/);
+  assert.match(css, /\.character-head/);
+  assert.match(css, /\.character-body/);
+  assert.match(css, /\.pose-battle/);
+  assert.match(css, /@media \(max-width: 680px\)/);
+});
