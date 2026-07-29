@@ -732,7 +732,7 @@ function BattleHeroFigure({
   const attackStyle =
     definition.role === "Nahkampf-DPS" || definition.role === "Tank"
       ? "sword"
-      : definition.portrait === "archer"
+      : definition.id === "astra"
         ? "arrow"
         : "fireball";
   return (

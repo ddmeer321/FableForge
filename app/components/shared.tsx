@@ -1,7 +1,8 @@
 "use client";
 
 import { CURRENCY_LABELS, getCosmetic, getHero } from "../game/data";
-import type { AppScreen, CurrencyWallet, HeroDefinition, Rarity } from "../game/types";
+import type { AppScreen, CharacterAppearance, CurrencyWallet, HeroDefinition, Rarity } from "../game/types";
+import { ModularCharacter } from "./character/FullBodyCharacter";
 
 export function HeroPortrait({
   hero,
@@ -16,25 +17,19 @@ export function HeroPortrait({
 }) {
   const skin = getCosmetic(skinId);
   const hasSkin = skin?.kind === "skin";
+  const appearance: CharacterAppearance = hasSkin
+    ? { ...hero.appearance, topColor: skin.colors[0], accentColor: skin.colors[1] }
+    : hero.appearance;
   return (
     <div
-      className={`adventure-portrait portrait-${hero.portrait} portrait-${size} ${hasSkin ? "has-cosmetic-skin" : ""} ${muted ? "is-muted" : ""}`}
+      className={`adventure-portrait portrait-${size} ${hasSkin ? "has-cosmetic-skin" : ""} ${muted ? "is-muted" : ""}`}
       style={{
         "--portrait-accent": hasSkin ? skin.colors[0] : hero.palette,
         "--skin-highlight": hasSkin ? skin.colors[1] : hero.palette,
       } as React.CSSProperties}
       aria-label={`${hero.name}, ${hero.role}${hasSkin ? `, Skin ${skin.name}` : ""}`}
     >
-      <span className="portrait-aura" />
-      <span className="portrait-body" />
-      <span className="portrait-neck" />
-      <span className="portrait-face" />
-      <span className="portrait-hair portrait-hair-left" />
-      <span className="portrait-hair portrait-hair-right" />
-      <span className="portrait-eye portrait-eye-left" />
-      <span className="portrait-eye portrait-eye-right" />
-      <span className="portrait-accessory" />
-      <b>{hero.name.slice(0, 1)}</b>
+      <ModularCharacter character={{ ...appearance, name: hero.name }} pose="idle" />
     </div>
   );
 }

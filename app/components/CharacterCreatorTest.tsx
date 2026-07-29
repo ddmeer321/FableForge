@@ -1,23 +1,17 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
+import { ModularCharacter } from "./character/FullBodyCharacter";
+import type {
+  CharacterAccessory as Accessory,
+  CharacterAppearance,
+  CharacterPose,
+  HairStyle,
+} from "../game/types";
 
 const STORAGE_KEY = "fableforge-character-test-v1";
 
-type HairStyle = "crest" | "round" | "side" | "short";
-type Accessory = "none" | "cape" | "scarf" | "shoulders";
-type CharacterPose = "idle" | "battle" | "cheer";
-
-export type CharacterDraft = {
-  name: string;
-  skinTone: string;
-  eyeColor: string;
-  hairStyle: HairStyle;
-  hairColor: string;
-  topColor: string;
-  accentColor: string;
-  accessory: Accessory;
-};
+export type CharacterDraft = CharacterAppearance & { name: string };
 
 const DEFAULT_CHARACTER: CharacterDraft = {
   name: "Spieler 1",
@@ -96,54 +90,6 @@ function ColorPicker({
         ))}
       </div>
     </fieldset>
-  );
-}
-
-export function ModularCharacter({
-  character,
-  pose = "idle",
-}: {
-  character: CharacterDraft;
-  pose?: CharacterPose;
-}) {
-  const characterStyle = {
-    "--character-skin": character.skinTone,
-    "--character-eyes": character.eyeColor,
-    "--character-hair": character.hairColor,
-    "--character-top": character.topColor,
-    "--character-accent": character.accentColor,
-  } as CSSProperties;
-
-  return (
-    <div
-      className={`modular-character pose-${pose} hair-${character.hairStyle} accessory-${character.accessory}`}
-      style={characterStyle}
-      aria-label={`Ganzkörpervorschau von ${character.name || "Spieler 1"}`}
-      role="img"
-    >
-      <span className="character-ground-shadow" />
-      <span className="character-cape" />
-      <span className="character-leg leg-left"><i /></span>
-      <span className="character-leg leg-right"><i /></span>
-      <span className="character-body" />
-      <span className="character-belt"><i /></span>
-      <span className="character-neck" />
-      <span className="character-arm arm-left"><i /></span>
-      <span className="character-arm arm-right"><i /></span>
-      <span className="character-shoulder shoulder-left" />
-      <span className="character-shoulder shoulder-right" />
-      <span className="character-head">
-        <i className="character-ear ear-left" />
-        <i className="character-ear ear-right" />
-        <i className="character-eye eye-left" />
-        <i className="character-eye eye-right" />
-        <i className="character-nose" />
-        <i className="character-mouth" />
-      </span>
-      <span className="character-hair-back" />
-      <span className="character-hair-front"><i /><b /></span>
-      <span className="character-scarf" />
-    </div>
   );
 }
 

@@ -424,7 +424,7 @@
   color: #87ddb3;
 }
 
-/* Die Spielfigur besteht ausschließlich aus einfachen, später austauschbaren Teilen. */
+/* Die Spielfigur besteht ausschließlich aus einfachen, später austauschbaren SVG-Teilen. */
 .modular-character {
   --character-skin: #e8aa7a;
   --character-eyes: #31242d;
@@ -433,353 +433,124 @@
   --character-accent: #f2b13d;
   position: relative;
   z-index: 2;
-  width: 190px;
-  height: 352px;
-  margin-bottom: 18px;
+  display: block;
+  overflow: visible;
   transform-origin: 50% 90%;
   animation: character-idle 2.7s ease-in-out infinite;
 }
 
+.creator-preview-stage .modular-character {
+  width: 190px;
+  height: 352px;
+  margin-bottom: 18px;
+}
+
 .character-ground-shadow {
-  position: absolute;
-  z-index: 0;
-  left: 30px;
-  bottom: 1px;
-  width: 134px;
-  height: 23px;
-  border-radius: 50%;
-  background: rgba(5, 8, 20, .34);
+  fill: rgba(5, 8, 20, .34);
   filter: blur(3px);
 }
 
 .character-cape {
-  position: absolute;
-  z-index: 1;
-  left: 23px;
-  top: 128px;
-  width: 144px;
-  height: 174px;
   display: none;
-  border-radius: 25% 25% 15% 15% / 12% 12% 58% 58%;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--character-accent), #000 18%), var(--character-accent));
-  clip-path: polygon(13% 0, 87% 0, 100% 100%, 72% 90%, 50% 100%, 25% 90%, 0 100%);
-  box-shadow: inset -9px 0 rgba(80, 35, 28, .12);
+  fill: var(--character-accent);
 }
 
 .accessory-cape .character-cape {
   display: block;
 }
 
-.character-leg {
-  position: absolute;
-  z-index: 2;
-  top: 269px;
-  width: 43px;
-  height: 66px;
-  border-radius: 11px 11px 15px 15px;
-  background: #32282f;
-  transform-origin: 50% 5%;
+.character-hair-back {
+  fill: color-mix(in srgb, var(--character-hair), #000 8%);
 }
 
-.character-leg i {
-  position: absolute;
-  bottom: -7px;
-  width: 53px;
-  height: 19px;
-  border-radius: 70% 42% 48% 55%;
-  background: #211a20;
+.character-leg {
+  transform-box: view-box;
 }
 
 .leg-left {
-  left: 50px;
-}
-
-.leg-left i {
-  right: -1px;
+  transform-origin: 72px 272px;
 }
 
 .leg-right {
-  right: 50px;
+  transform-origin: 118px 272px;
 }
 
-.leg-right i {
-  left: -1px;
-  transform: scaleX(-1);
+.character-leg rect {
+  fill: #32282f;
+}
+
+.character-shoe {
+  fill: #211a20;
 }
 
 .character-body {
-  position: absolute;
-  z-index: 4;
-  left: 38px;
-  top: 171px;
-  width: 114px;
-  height: 112px;
-  border-radius: 38% 38% 29% 29% / 28% 28% 72% 72%;
-  background: linear-gradient(100deg, color-mix(in srgb, var(--character-top), #fff 7%), var(--character-top) 55%, color-mix(in srgb, var(--character-top), #000 10%));
-  box-shadow: inset 0 5px rgba(255, 255, 255, .08), inset -8px 0 rgba(67, 22, 38, .09);
+  fill: var(--character-top);
 }
 
-.character-belt {
-  position: absolute;
-  z-index: 8;
-  left: 51px;
-  top: 237px;
-  width: 88px;
-  height: 15px;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--character-top), #000 29%);
+.character-collar {
+  fill: color-mix(in srgb, var(--character-top), #000 12%);
 }
 
-.character-belt i {
-  position: absolute;
-  left: 36px;
-  top: -2px;
-  width: 18px;
-  height: 18px;
-  border: 4px solid var(--character-accent);
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--character-top), #000 18%);
+.character-badge {
+  fill: var(--character-accent);
 }
 
-.character-neck {
-  position: absolute;
-  z-index: 5;
-  left: 78px;
-  top: 151px;
-  width: 34px;
-  height: 37px;
-  border-radius: 12px;
-  background: var(--character-skin);
+.character-neck,
+.character-hand,
+.character-ear,
+.character-head {
+  fill: var(--character-skin);
 }
 
 .character-arm {
-  position: absolute;
-  z-index: 5;
-  top: 185px;
-  width: 37px;
-  height: 103px;
-  border-radius: 45% 45% 48% 48%;
-  background: linear-gradient(var(--character-top) 0 68%, var(--character-skin) 69%);
-  transform-origin: 50% 11%;
-  box-shadow: inset -5px 0 rgba(60, 25, 36, .08);
+  transform-box: view-box;
 }
 
-.character-arm i {
-  position: absolute;
-  bottom: -2px;
-  left: 2px;
-  width: 33px;
-  height: 32px;
-  border-radius: 48%;
-  background: var(--character-skin);
+.character-arm rect {
+  fill: var(--character-top);
 }
 
 .arm-left {
-  left: 25px;
-  transform: rotate(7deg);
+  transform-origin: 48px 192px;
 }
 
 .arm-right {
-  right: 25px;
-  transform: rotate(-7deg);
+  transform-origin: 142px 192px;
 }
 
 .character-shoulder {
-  position: absolute;
-  z-index: 8;
-  top: 178px;
-  width: 42px;
-  height: 25px;
   display: none;
-  border: 3px solid color-mix(in srgb, var(--character-accent), #fff 16%);
-  border-radius: 70% 70% 35% 35%;
-  background: color-mix(in srgb, var(--character-accent), #3d3656 28%);
-}
-
-.shoulder-left {
-  left: 24px;
-  transform: rotate(-12deg);
-}
-
-.shoulder-right {
-  right: 24px;
-  transform: rotate(12deg);
+  fill: color-mix(in srgb, var(--character-accent), #3d3656 28%);
+  stroke: color-mix(in srgb, var(--character-accent), #fff 16%);
+  stroke-width: 4;
 }
 
 .accessory-shoulders .character-shoulder {
   display: block;
 }
 
-.character-head {
-  position: absolute;
-  z-index: 8;
-  left: 43px;
-  top: 46px;
-  width: 104px;
-  height: 121px;
-  border-radius: 47% 47% 49% 49% / 42% 42% 58% 58%;
-  background: linear-gradient(105deg, color-mix(in srgb, var(--character-skin), #fff 8%), var(--character-skin));
-  box-shadow: inset -6px -3px rgba(92, 48, 48, .06), 0 3px 0 rgba(71, 37, 42, .08);
-}
-
-.character-ear {
-  position: absolute;
-  z-index: -1;
-  top: 55px;
-  width: 18px;
-  height: 27px;
-  border-radius: 50%;
-  background: var(--character-skin);
-}
-
-.ear-left {
-  left: -8px;
-}
-
-.ear-right {
-  right: -8px;
-}
-
 .character-eye {
-  position: absolute;
-  top: 59px;
-  width: 12px;
-  height: 15px;
-  border-radius: 50%;
-  background: var(--character-eyes);
-  box-shadow: inset 2px 2px rgba(255, 255, 255, .18);
-}
-
-.eye-left {
-  left: 26px;
-}
-
-.eye-right {
-  right: 26px;
-}
-
-.character-nose {
-  position: absolute;
-  top: 77px;
-  left: 49px;
-  width: 6px;
-  height: 7px;
-  border-right: 2px solid color-mix(in srgb, var(--character-skin), #593a3f 30%);
-  border-bottom: 2px solid color-mix(in srgb, var(--character-skin), #593a3f 30%);
-  border-radius: 0 0 5px 0;
+  fill: var(--character-eyes);
 }
 
 .character-mouth {
-  position: absolute;
-  left: 39px;
-  top: 91px;
-  width: 27px;
-  height: 10px;
-  border-bottom: 3px solid color-mix(in srgb, var(--character-skin), #5d2e39 55%);
-  border-radius: 50%;
-}
-
-.character-hair-back {
-  position: absolute;
-  z-index: 7;
-  left: 38px;
-  top: 38px;
-  width: 114px;
-  height: 89px;
-  border-radius: 50% 50% 23% 23%;
-  background: color-mix(in srgb, var(--character-hair), #000 8%);
+  fill: none;
+  stroke: color-mix(in srgb, var(--character-skin), #5d2e39 55%);
+  stroke-width: 3.4;
+  stroke-linecap: round;
 }
 
 .character-hair-front {
-  position: absolute;
-  z-index: 10;
-  left: 43px;
-  top: 42px;
-  width: 105px;
-  height: 53px;
-  overflow: hidden;
-  border-radius: 52% 52% 29% 34%;
-  background: var(--character-hair);
-  box-shadow: inset 0 5px rgba(255, 255, 255, .06);
-}
-
-.character-hair-front i,
-.character-hair-front b {
-  position: absolute;
-  display: block;
-  background: color-mix(in srgb, var(--character-hair), #fff 8%);
-}
-
-.hair-crest .character-hair-front i {
-  top: -30px;
-  left: 47px;
-  width: 28px;
-  height: 65px;
-  transform: rotate(27deg);
-  clip-path: polygon(40% 0, 100% 100%, 0 84%);
-}
-
-.hair-crest .character-hair-front b {
-  top: -13px;
-  left: 67px;
-  width: 30px;
-  height: 52px;
-  transform: rotate(-23deg);
-  clip-path: polygon(30% 0, 100% 100%, 0 82%);
-}
-
-.hair-round .character-hair-front {
-  height: 62px;
-  border-radius: 50% 50% 35% 35%;
-}
-
-.hair-round .character-hair-back {
-  height: 115px;
-  border-radius: 50% 50% 40% 40%;
-}
-
-.hair-side .character-hair-front {
-  height: 68px;
-  clip-path: polygon(0 0, 100% 0, 100% 45%, 66% 32%, 47% 78%, 28% 42%, 0 67%);
-}
-
-.hair-side .character-hair-back {
-  transform: rotate(-3deg);
-}
-
-.hair-short .character-hair-front {
-  height: 39px;
-  clip-path: polygon(0 0, 100% 0, 100% 75%, 85% 59%, 72% 90%, 58% 60%, 44% 88%, 28% 58%, 14% 85%, 0 72%);
-}
-
-.hair-short .character-hair-back {
-  height: 58px;
+  fill: var(--character-hair);
 }
 
 .character-scarf {
-  position: absolute;
-  z-index: 9;
-  left: 61px;
-  top: 162px;
-  width: 69px;
-  height: 22px;
   display: none;
-  border-radius: 45%;
-  background: var(--character-accent);
-  box-shadow: 0 4px 0 color-mix(in srgb, var(--character-accent), #000 18%);
 }
 
-.character-scarf::after {
-  content: "";
-  position: absolute;
-  right: 2px;
-  top: 14px;
-  width: 20px;
-  height: 52px;
-  border-radius: 7px;
-  background: var(--character-accent);
-  transform: rotate(-12deg);
-  transform-origin: top;
+.character-scarf ellipse,
+.character-scarf rect {
+  fill: var(--character-accent);
 }
 
 .accessory-scarf .character-scarf {
@@ -791,19 +562,19 @@
 }
 
 .pose-battle .arm-left {
-  transform: rotate(29deg);
+  transform: rotate(35deg);
 }
 
 .pose-battle .arm-right {
-  transform: rotate(-58deg);
+  transform: rotate(-60deg);
 }
 
 .pose-battle .leg-left {
-  transform: rotate(7deg);
+  transform: rotate(8deg);
 }
 
 .pose-battle .leg-right {
-  transform: translateX(6px) rotate(-5deg);
+  transform: rotate(-6deg);
 }
 
 .pose-cheer {
@@ -811,11 +582,11 @@
 }
 
 .pose-cheer .arm-left {
-  transform: rotate(150deg);
+  transform: rotate(160deg);
 }
 
 .pose-cheer .arm-right {
-  transform: rotate(-150deg);
+  transform: rotate(-160deg);
 }
 
 @keyframes creator-backdrop-in {
@@ -869,7 +640,7 @@
     height: 350px;
   }
 
-  .modular-character {
+  .creator-preview-stage .modular-character {
     scale: .9;
     transform-origin: center bottom;
   }
@@ -933,7 +704,7 @@
     height: 332px;
   }
 
-  .modular-character {
+  .creator-preview-stage .modular-character {
     margin-bottom: 2px;
     scale: .84;
   }
@@ -1007,7 +778,7 @@
     max-height: 430px;
   }
 
-  .modular-character {
+  .creator-preview-stage .modular-character {
     margin-bottom: -15px;
     scale: .78;
   }

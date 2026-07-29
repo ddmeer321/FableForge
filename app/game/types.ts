@@ -22,6 +22,20 @@ export type TeamBehavior =
   | "Team schützen";
 export type TargetPriority = "Nächstes Ziel" | "Schwache Gegner" | "Boss";
 
+export type HairStyle = "crest" | "round" | "side" | "short";
+export type CharacterAccessory = "none" | "cape" | "scarf" | "shoulders";
+export type CharacterPose = "idle" | "battle" | "cheer";
+
+export type CharacterAppearance = {
+  skinTone: string;
+  eyeColor: string;
+  hairStyle: HairStyle;
+  hairColor: string;
+  topColor: string;
+  accentColor: string;
+  accessory: CharacterAccessory;
+};
+
 export type HeroDefinition = {
   id: string;
   name: string;
@@ -37,7 +51,7 @@ export type HeroDefinition = {
   passiveName: string;
   passiveDescription: string;
   palette: string;
-  portrait: "knight" | "archer" | "healer" | "rogue" | "mage" | "guardian" | "bard";
+  appearance: CharacterAppearance;
 };
 
 export type GearSlot = "Waffe" | "Rüstung" | "Ring" | "Relikt";

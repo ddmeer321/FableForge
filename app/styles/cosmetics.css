@@ -560,15 +560,6 @@
     0 0 18px color-mix(in srgb, var(--portrait-accent) 42%, transparent);
 }
 
-.has-cosmetic-skin .portrait-body {
-  background: linear-gradient(90deg, var(--portrait-accent), var(--skin-highlight), var(--portrait-accent));
-}
-
-.has-cosmetic-skin .portrait-accessory {
-  border-color: var(--skin-highlight);
-  filter: drop-shadow(0 0 4px var(--portrait-accent));
-}
-
 @keyframes wardrobe-aura-pulse {
   50% { transform: scale(1.04); opacity: .78; }
 }
